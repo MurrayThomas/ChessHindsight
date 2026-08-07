@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HindsightChess</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="app">
+  <nav id="sidebar">
+    <div class="brand">
+      <span class="brand-mark">&#9816;</span>
+      <span class="brand-text">HindsightChess</span>
+    </div>
+    <button class="nav-item active" data-view="dashboard"><span>&#9638;</span>Dashboard</button>
+    <button class="nav-item" data-view="explorer"><span>&#9812;</span>Explorer</button>
+    <button class="nav-item" data-view="positions"><span>&#9819;</span>Positions</button>
+    <button class="nav-item" data-view="h2h"><span>&#9876;</span>Head&#8209;to&#8209;head</button>
+    <button class="nav-item" data-view="openings"><span>&#9814;</span>Openings</button>
+    <button class="nav-item" data-view="games"><span>&#9776;</span>Games</button>
+    <button class="nav-item" data-view="favourites"><span>&#9733;</span>Favourites</button>
+    <button class="nav-item" data-view="settings"><span>&#9881;</span>Settings</button>
+    <div class="sidebar-foot">
+      <div id="db-badge" class="badge">—</div>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <!-- ---------- Filter bar ---------- -->
+    <section id="filterbar">
+      <div class="filter-row">
+        <label class="f">
+          <span>Player</span>
+          <input id="f-player" list="players-list" placeholder="username &#8629;" autocomplete="off"
+                 title="Type a username and press Enter to apply it">
+        </label>
+        <datalist id="players-list"></datalist>
+
+        <label class="f">
+          <span>Colour</span>
+          <select id="f-color">
+            <option value="">Both</option>
+            <option value="white">White</option>
+            <option value="black">Black</option>
+          </select>
+        </label>
+
+        <label class="f">
+          <span>Opponent</span>
+          <input id="f-opponent" list="opponents-list" placeholder="any &#8629;" autocomplete="off"
+                 title="Type a username and press Enter to apply it">
+        </label>
+        <datalist id="opponents-list"></datalist>
+
+        <div class="f">
+          <span>Time control</span>
+          <div id="f-tc" class="chips">
+            <button class="chip" data-tc="bullet">Bullet</button>
+            <button class="chip" data-tc="blitz">Blitz</button>
+            <button class="chip" data-tc="rapid">Rapid</button>
+            <button class="chip" data-tc="classical">Classical</button>
+            <button class="chip" data-tc="correspondence">Corr.</button>
+          </div>
+        </div>
+
+        <div class="f">
+          <span>Period</span>
+          <div id="f-period" class="chips">
+            <button class="chip on" data-months="0">All time</button>
+            <button class="chip" data-months="1">Last month</button>
+            <button class="chip" data-months="3">3 months</button>
+            <button class="chip" data-months="6">6 months</button>
+            <button class="chip" data-months="12">1 year</button>
+          </div>
+        </div>
+
+        <button id="more-filters" class="ghost">More&nbsp;&#9662;</button>
+        <button id="reset-filters" class="ghost">Reset</button>
+      </div>
+
+      <div class="filter-row extra hidden" id="extra-filters">
+        <label class="f"><span>Source</span>
+          <select id="f-source">
+            <option value="">Any</option>
+            <option value="chesscom">Chess.com</option>
+            <option value="lichess">Lichess</option>
+            <option value="pgn">PGN import</option>
+          </select>
+        </label>
+        <label class="f"><span>Rated</span>
+          <select id="f-rated">
+            <option value="">Any</option>
+            <option value="true">Rated</option>
+            <option value="false">Casual</option>
+          </select>
+        </label>
+        <!-- Filled at startup from the modes actually in the database, so this
+             lists Horde only for someone who has played Horde. One select
+             rather than a row of chips: these are rare games, and giving them
+             permanent space would misrepresent how much they matter. -->
+        <label class="f" title="Game mode. Everything outside Standard is excluded by default, which is why the two counts on the Dashboard can differ."><span>Variant</span>
+          <select id="f-variant"><option value="">Standard</option></select>
+        </label>
+        <label class="f"><span>From
+          <b class="help-dot" title="Day / month / year. 05/08/2026 is the 5th of August 2026. Leave it blank for no earliest date.">?</b></span>
+          <input id="f-since" type="date"></label>
+        <label class="f"><span>To
+          <b class="help-dot" title="Day / month / year. 05/08/2026 is the 5th of August 2026. Leave it blank for no latest date.">?</b></span>
+          <input id="f-until" type="date"></label>
+        <span class="f-note muted">Setting these clears the Period buttons.</span>
+        <label class="f narrow"><span>Opp. Elo &#8805;</span><input id="f-minelo" type="number" min="0" step="50" placeholder="any"></label>
+        <label class="f narrow"><span>Opp. Elo &#8804;</span><input id="f-maxelo" type="number" min="0" step="50" placeholder="any"></label>
+        <label class="f" title="Games the player in the Player box was winning on material and lost anyway">
+          <span>Threw it away</span>
+          <select id="f-threw">
+            <option value="">Off</option>
+            <option value="2">Was +2 and lost</option>
+            <option value="3">Was +3 and lost</option>
+            <option value="4">Was +4 and lost</option>
+            <option value="5">Was +5 and lost</option>
+            <option value="9">Was a queen up and lost</option>
+          </select>
+        </label>
+        <span class="f-note muted">
+          Measured in material, held for at least three moves &mdash; not an
+          engine score. Needs a name in <b>Player</b>.
+        </span>
+      </div>
+    </section>
+
+    <!-- ---------- Dashboard ---------- -->
+    <section class="view active" id="view-dashboard">
+      <div class="cards" id="dash-cards"></div>
+
+      <div class="split">
+        <div class="panel">
+          <h2>Record</h2>
+          <div id="dash-record"></div>
+          <h3>By time control</h3>
+          <div id="dash-tc"></div>
+        </div>
+        <div class="panel">
+          <h2>Most-played opponents</h2>
+          <p class="hint">Click one to open the head-to-head breakdown.</p>
+          <div id="dash-opponents" class="scroll-y"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Sync</h2>
+        <div class="row">
+          <button id="btn-sync" class="primary">Sync accounts</button>
+          <button id="btn-sync-full" class="ghost">Full resync</button>
+          <button id="btn-import" class="ghost">Import PGN&hellip;</button>
+          <span id="sync-msg" class="muted"></span>
+        </div>
+        <pre id="sync-log" class="log hidden"></pre>
+      </div>
+    </section>
+
+    <!-- ---------- Explorer ---------- -->
+    <section class="view" id="view-explorer">
+      <div class="explorer-grid">
+        <div class="board-col">
+          <!-- Says which game is on the board, and lets it be starred from
+               here — reviewing one is exactly when you find out it is worth
+               keeping. -->
+          <div id="review-bar" class="review-bar hidden"></div>
+          <div id="explorer-board-host"></div>
+        </div>
+
+        <div class="tree-col panel">
+          <!-- Two readings of the same position: what you have played from it,
+               and what titled players have. -->
+          <div class="tabs" id="ex-tabs">
+            <button class="tab on" data-tab="mine">Your games</button>
+            <button class="tab" data-tab="titled">Titled players</button>
+          </div>
+
+          <div class="tab-panel" id="ex-panel-mine">
+            <h2>Continuations <span id="ex-total" class="muted"></span></h2>
+            <p class="hint">
+              Click a piece then a square to play a move, or click any row below to
+              follow it. Arrow keys step through the line.
+              <b>Share</b> is how often each move was played from here;
+              <b>Win&nbsp;%</b> is games won outright, with draws counting against it.
+            </p>
+            <div id="explorer-tree"></div>
+            <h3>Games through this position</h3>
+            <div id="explorer-games" class="scroll-y"></div>
+          </div>
+
+          <div class="tab-panel hidden" id="ex-panel-titled">
+            <h2>Titled players <span id="tp-total" class="muted"></span></h2>
+            <p class="hint" id="tp-hint">
+              What strong players have played from the position on the board.
+              Click a player to see only their games and only their moves.
+            </p>
+
+            <div id="tp-empty" class="hidden">
+              <p class="muted">
+                Your reference library is empty. Add a titled player in
+                <b>Settings → Titled-player library</b> and their games become
+                comparable from any position on the board.
+              </p>
+              <button class="primary" id="tp-goto-settings">Open Settings</button>
+            </div>
+
+            <div id="tp-body">
+              <div class="row" id="tp-focus-row">
+                <label class="f"><span>Compare against</span>
+                  <select id="tp-player">
+                    <option value="">Everyone in the library</option>
+                  </select>
+                </label>
+                <span id="tp-focus-note" class="muted"></span>
+              </div>
+              <div id="tp-tree"></div>
+              <h3>Who has been here</h3>
+              <div id="tp-players" class="scroll-y"></div>
+              <h3>Games through this position</h3>
+              <div id="tp-games" class="scroll-y"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Positions ---------- -->
+    <section class="view" id="view-positions">
+      <div class="panel">
+        <h2>Positions you reach most often</h2>
+        <p class="hint">
+          Sorted by frequency. Watch for a high game count paired with a low win
+          rate — that is a position worth studying.
+        </p>
+        <div class="row">
+          <label class="f narrow"><span>From move</span><input id="pos-minply" type="number" value="5" min="1" max="20"></label>
+          <label class="f narrow"><span>To move</span><input id="pos-maxply" type="number" value="20" min="1" max="30"></label>
+          <label class="f narrow"><span>Min games</span><input id="pos-mingames" type="number" value="3" min="2"></label>
+          <label class="f narrow"><span>Show</span><input id="pos-limit" type="number" value="24" min="4" max="100"></label>
+          <button id="pos-refresh" class="primary">Refresh</button>
+          <label class="f"><span>Sort</span>
+            <select id="pos-sort">
+              <option value="games">Most frequent</option>
+              <option value="worst">Lowest win rate</option>
+              <option value="best">Highest win rate</option>
+            </select>
+          </label>
+          <button id="pos-eval" class="ghost" title="Run Stockfish on every position shown">Evaluate all</button>
+          <span id="pos-eval-msg" class="muted"></span>
+        </div>
+      </div>
+
+      <!-- Opens when a position card is clicked: the same interactive board the
+           Explorer uses, so a position can be played on where it was found. -->
+      <div class="panel hidden" id="pos-analysis">
+        <div class="panel-head">
+          <h2>Analysis <span id="pos-an-title" class="muted"></span></h2>
+          <button id="pos-an-close" class="ghost">Close</button>
+        </div>
+        <div class="explorer-grid">
+          <div class="board-col" id="pos-board-host"></div>
+          <div class="tree-col">
+            <h3>Continuations <span id="pos-an-total" class="muted"></span></h3>
+            <div id="pos-an-tree"></div>
+            <h3>Games through this position</h3>
+            <div id="pos-an-games" class="scroll-y"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="positions-grid" class="pos-grid"></div>
+    </section>
+
+    <!-- ---------- Head to head ---------- -->
+    <section class="view" id="view-h2h">
+      <div class="panel">
+        <h2>Head-to-head</h2>
+        <div class="row">
+          <label class="f"><span>Player</span><input id="h2h-player" list="players-list" placeholder="you"></label>
+          <label class="f"><span>Opponent</span><input id="h2h-opponent" list="opponents-list" placeholder="your friend"></label>
+          <button id="h2h-go" class="primary">Compare</button>
+        </div>
+        <p class="hint">Uses the time-control and date filters above; player and colour come from these two boxes.</p>
+      </div>
+      <div id="h2h-out"></div>
+    </section>
+
+    <!-- ---------- Openings ---------- -->
+    <section class="view" id="view-openings">
+      <!-- Above the list on purpose: the list runs to 60 rows, so a detail
+           panel below it opens off-screen and looks like nothing happened. -->
+      <div class="panel hidden" id="opening-detail">
+        <div class="panel-head">
+          <h2 id="op-name">—</h2>
+          <button id="op-close" class="ghost">Close</button>
+        </div>
+        <p class="hint" id="op-summary"></p>
+        <div class="row">
+          <label class="f narrow"><span>Compare first</span>
+            <select id="op-depth">
+              <option value="4" selected>2 moves</option>
+              <option value="6">3 moves</option>
+              <option value="8">4 moves</option>
+              <option value="10">5 moves</option>
+              <option value="12">6 moves</option>
+            </select>
+          </label>
+          <span class="f-note muted">Click a move order to open it on the Explorer board.</span>
+        </div>
+        <div id="op-lines"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Openings</h2>
+        <p class="hint">
+          Grouped by opening name. Click one to see the move orders that reach
+          it and how each of them scored.
+        </p>
+        <div id="openings-out"></div>
+      </div>
+    </section>
+
+    <!-- ---------- Games ---------- -->
+    <section class="view" id="view-games">
+      <div class="panel">
+        <h2>Games</h2>
+        <p class="hint">
+          Click a game to replay it on the Explorer board. The star saves it to
+          Favourites; you can also star it while reviewing.
+        </p>
+        <div id="games-scan" class="scan-strip hidden"></div>
+        <div id="games-out"></div>
+        <div class="row">
+          <button id="games-prev" class="ghost">&#8592; Previous</button>
+          <span id="games-page" class="muted"></span>
+          <button id="games-next" class="ghost">Next &#8594;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Favourites ---------- -->
+    <section class="view" id="view-favourites">
+      <div class="panel">
+        <h2>Favourites <span id="fav-count" class="muted"></span></h2>
+        <p class="hint">
+          Games you starred, under the name you gave them. Click a row to replay
+          the whole game on the Explorer board. The filter bar does not apply
+          here — a favourite stays in this list whatever is filtered.
+        </p>
+        <div class="row">
+          <label class="f grow"><span>Search</span>
+            <input id="fav-search" placeholder="name, player or opening" autocomplete="off">
+          </label>
+        </div>
+        <div id="fav-out"></div>
+      </div>
+    </section>
+
+    <!-- ---------- Settings ---------- -->
+    <section class="view" id="view-settings">
+      <div class="panel">
+        <h2>Appearance</h2>
+        <p class="hint">Click a theme to apply it immediately. The swatch shows
+          background, panel, accent and board colours.</p>
+        <div id="theme-picker" class="theme-grid"></div>
+
+        <h3>Board colours</h3>
+        <p class="hint">
+          Chosen separately from the theme, so a grey interface can have a green
+          board. Leave it on <b>Follow theme</b> to keep the squares each theme
+          was designed with.
+        </p>
+        <div id="board-picker" class="theme-grid"></div>
+
+        <h3>Piece set <span id="piece-count" class="muted"></span></h3>
+        <p class="hint">
+          Every piece set Lichess ships, previewed on the current theme's board
+          colours. Cburnett is the Lichess default.
+        </p>
+        <label class="f"><span>Find a set</span>
+          <input id="piece-search" placeholder="type a name, e.g. maestro" autocomplete="off">
+        </label>
+        <div id="piece-picker" class="theme-grid piece-grid"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Accounts</h2>
+        <p class="hint">Games from these accounts are downloaded and kept up to date.</p>
+        <div id="accounts-list"></div>
+        <div class="row">
+          <select id="acct-source">
+            <option value="chesscom">Chess.com</option>
+            <option value="lichess">Lichess</option>
+          </select>
+          <input id="acct-username" placeholder="username">
+          <button id="acct-add" class="primary">Add account</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Titled-player library</h2>
+        <p class="hint">
+          Games by strong players, kept apart from your own so they never affect
+          your statistics. Once a player is here, the Explorer's
+          <b>Titled players</b> tab shows what they played from whatever position
+          is on the board.
+        </p>
+        <div id="lib-summary" class="muted"></div>
+        <div id="lib-list"></div>
+
+        <h3>Add a player</h3>
+        <div class="row">
+          <select id="lib-source">
+            <option value="chesscom">Chess.com</option>
+            <option value="lichess">Lichess</option>
+          </select>
+          <input id="lib-username" placeholder="username, e.g. MagnusCarlsen" autocomplete="off">
+          <button id="lib-add" class="primary">Add</button>
+          <button id="lib-sync" class="ghost" title="Download new games for everyone on the list">Update library</button>
+        </div>
+        <div class="row">
+          <label class="f grow"><span>Or search by username</span>
+            <input id="lib-search" placeholder="carlsen" autocomplete="off">
+          </label>
+          <label class="f narrow"><span>Title</span>
+            <select id="lib-title">
+              <option>GM</option><option>IM</option><option>FM</option>
+              <option>WGM</option><option>WIM</option><option>WFM</option>
+              <option>NM</option><option>CM</option>
+            </select>
+          </label>
+          <button id="lib-search-go" class="ghost">Search</button>
+        </div>
+        <div class="row">
+          <button id="lib-import" class="ghost"
+                  title="Add an over-the-board database (TWIC, a tournament PGN) as reference material">
+            Import masters PGN&hellip;
+          </button>
+        </div>
+        <p class="hint" id="lib-search-hint">
+          Chess.com search matches the account name, so "carlsen" finds
+          MagnusCarlsen. Lichess usernames are handles — Magnus plays there as
+          DrNykterstein — so search only matches what you type.
+        </p>
+        <div id="lib-results"></div>
+        <div id="lib-msg" class="muted"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Your identities</h2>
+        <p class="hint">
+          Usernames that count as "you" when computing win rates. One per line —
+          add both your Chess.com and Lichess names if they differ.
+        </p>
+        <textarea id="me-list" rows="3" spellcheck="false"></textarea>
+        <button id="me-save" class="primary">Save</button>
+      </div>
+
+      <div class="panel">
+        <h2>Engine</h2>
+        <div id="engine-status" class="muted"></div>
+        <div class="row">
+          <label class="f grow"><span>Stockfish path</span><input id="eng-path" placeholder="C:\path\to\stockfish.exe"></label>
+          <label class="f narrow" title="Also on the dropdown under every board — this is the same setting"><span>Depth</span><input id="eng-depth" type="number" min="6" max="40"></label>
+          <label class="f narrow"><span>Threads</span><input id="eng-threads" type="number" min="1" max="32"></label>
+          <label class="f narrow"><span>Hash MB</span><input id="eng-hash" type="number" min="16" step="16"></label>
+          <label class="f narrow" title="How many candidate lines to show under the board"><span>Lines</span><input id="eng-multipv" type="number" min="1" max="5"></label>
+        </div>
+        <p class="hint">
+          More lines means more search for the same depth, so raising this makes
+          each evaluation slower. Three is the usual balance.
+        </p>
+        <p class="hint">
+          Depth is the same setting as the dropdown under every board, so change
+          it wherever you happen to be. Each extra ply costs roughly 60% more
+          time — 25 is seconds to a minute per position where 18 is about one
+          second. No search runs longer than two minutes; if the clock stops one
+          early, the board says so and reports the depth it did reach.
+        </p>
+        <p class="hint">
+          Threads and hash are separate settings, not a ratio. Threads is how
+          many cores search; half your physical cores is usually the whole gain,
+          and counting the hyperthreads is not — searching several lines at once
+          parallelises poorly, so expect about a third off the time, not a
+          quarter of it. Hash is how much of the tree the engine remembers, and
+          it is kept between positions, so walking a line reuses it: 512–1024 MB
+          is worth roughly another tenth, and more than that buys nothing at
+          these search lengths. Neither is a substitute for the depth you pick.
+        </p>
+        <button id="eng-save" class="primary">Save engine settings</button>
+      </div>
+
+      <div class="panel">
+        <h2>Indexing</h2>
+        <p class="hint">
+          Positions are indexed up to this many plies for the explorer and the
+          positions view. Raising it makes deeper lines searchable; full move
+          lists are always stored, so changing this only needs a reindex, never
+          a re-download.
+        </p>
+        <div class="row">
+          <label class="f narrow"><span>Max ply</span><input id="idx-ply" type="number" min="10" max="120"></label>
+          <button id="idx-save" class="ghost">Save</button>
+          <button id="idx-reindex" class="ghost">Reindex now</button>
+          <span id="idx-msg" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Lichess API token <span class="muted">(optional)</span></h2>
+        <p class="hint">
+          Raises the Lichess export rate limit. Only needed if syncing a large
+          account feels slow. Create one at lichess.org &rsaquo; Preferences &rsaquo; API access tokens;
+          no scopes are required for public game export.
+        </p>
+        <div class="row">
+          <input id="lichess-token" type="password" placeholder="leave blank to keep current">
+          <button id="token-save" class="ghost">Save token</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Naming a favourite. A plain window.prompt() is not reliably available in the
+     WebView2 host the packaged app runs in, so the app brings its own. -->
+<div id="fav-dialog" class="modal hidden">
+  <div class="modal-card">
+    <h3 id="fav-dialog-title">Name this game</h3>
+    <p class="hint" id="fav-dialog-sub"></p>
+    <input id="fav-name" maxlength="120" autocomplete="off"
+           placeholder="e.g. the h-pawn mate against Anders">
+    <div class="row modal-actions">
+      <button id="fav-cancel" class="ghost">Cancel</button>
+      <button id="fav-save" class="primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/pieces.js"></script>
+<script src="/board.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

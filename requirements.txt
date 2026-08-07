@@ -1,0 +1,3 @@
+chess>=1.11.2
+requests>=2.32
+pywebview>=6.0

@@ -1,0 +1,1204 @@
+/* HindsightChess — local desktop UI */
+
+/* ---------- Themes ----------
+ * Each theme is a complete variable set. `data-theme` on <html> selects one;
+ * the :root block below is the default (Walnut) so the page is never unstyled
+ * while the saved preference is being loaded.
+ *
+ * Surfaces step bg -> bg-2 -> bg-3 with a deliberate gap at each step, so
+ * panels read as raised rather than blending into the background.
+ */
+
+:root,
+:root[data-theme="walnut"] {
+  --bg: #17140f;
+  --bg-2: #211c15;
+  --bg-3: #2c251c;
+  --line: #3b3225;
+  --text: #f0e9dd;
+  --muted: #a8998a;
+  --accent: #e0a343;
+  --accent-dim: #8a6320;
+  --win: #6aa84f;
+  --draw: #9c9184;
+  --loss: #cc5f4a;
+  --light-sq: #e8d3ac;
+  --dark-sq: #a2703f;
+}
+
+:root[data-theme="slate"] {
+  --bg: #0f1418;
+  --bg-2: #18202a;
+  --bg-3: #212c38;
+  --line: #2f3d4c;
+  --text: #e8edf2;
+  --muted: #93a3b4;
+  --accent: #57b6e8;
+  --accent-dim: #2a6c93;
+  --win: #45a07a;
+  --draw: #8695a5;
+  --loss: #c9584f;
+  --light-sq: #dfe6ec;
+  --dark-sq: #6f8ba3;
+}
+
+:root[data-theme="midnight"] {
+  --bg: #0a0b12;
+  --bg-2: #12141f;
+  --bg-3: #1b1e2d;
+  --line: #2a2f45;
+  --text: #e9eaf3;
+  --muted: #8f94ad;
+  --accent: #8b7dfa;
+  --accent-dim: #4a3f9e;
+  --win: #46a377;
+  --draw: #82869c;
+  --loss: #d05a6e;
+  --light-sq: #c9c6de;
+  --dark-sq: #5d5788;
+}
+
+:root[data-theme="paper"] {
+  --bg: #f2efe9;
+  --bg-2: #fbf9f5;
+  --bg-3: #ebe6dd;
+  --line: #d6cec1;
+  --text: #23201b;
+  --muted: #6f675c;
+  --accent: #9a6b1f;
+  --accent-dim: #b58234;
+  --win: #3f7d4e;
+  --draw: #8a8378;
+  --loss: #b04638;
+  --light-sq: #eadfc4;
+  --dark-sq: #b08a5c;
+}
+
+/* Tournament green and white, the colours of a real vinyl club set. */
+:root[data-theme="forest"] {
+  --bg: #101512;
+  --bg-2: #17201a;
+  --bg-3: #1f2b23;
+  --line: #2c3a30;
+  --text: #e8f0e9;
+  --muted: #93a897;
+  --accent: #7fbf6a;
+  --accent-dim: #3f6b34;
+  --win: #5fae63;
+  --draw: #8b9b8e;
+  --loss: #c85f4e;
+  /* White rather than buff. The faintest green cast keeps it sitting with the
+     dark squares instead of reading as a hole cut in the board. */
+  --light-sq: #f3f7f1;
+  --dark-sq: #6d8f5a;
+}
+
+:root[data-theme="nord"] {
+  --bg: #2e3440;
+  --bg-2: #3b4252;
+  --bg-3: #434c5e;
+  --line: #4c566a;
+  --text: #eceff4;
+  --muted: #a5adba;
+  --accent: #88c0d0;
+  --accent-dim: #4b7f92;
+  --win: #a3be8c;
+  --draw: #9aa4b4;
+  --loss: #bf616a;
+  --light-sq: #d8dee9;
+  --dark-sq: #7b8ca3;
+}
+
+:root[data-theme="ocean"] {
+  --bg: #08171c;
+  --bg-2: #0e2129;
+  --bg-3: #143038;
+  --line: #1e4551;
+  --text: #e2f1f4;
+  --muted: #8bb0b8;
+  --accent: #45c2c8;
+  --accent-dim: #1d6b74;
+  --win: #43a98a;
+  --draw: #7f9ba1;
+  --loss: #cf6155;
+  --light-sq: #d9e8e6;
+  --dark-sq: #5d8c92;
+}
+
+/* Accent is orange rather than red so it never reads as a "loss" marker. */
+:root[data-theme="ember"] {
+  --bg: #141212;
+  --bg-2: #1d1a19;
+  --bg-3: #272322;
+  --line: #3a3231;
+  --text: #f2ebe8;
+  --muted: #a89b97;
+  --accent: #e07a3f;
+  --accent-dim: #8c4a1f;
+  --win: #6da85f;
+  --draw: #9b8f8c;
+  --loss: #cc5245;
+  --light-sq: #ecd9c2;
+  --dark-sq: #9e6a4d;
+}
+
+:root[data-theme="sepia"] {
+  --bg: #ece2cf;
+  --bg-2: #f7efe0;
+  --bg-3: #e2d6bf;
+  --line: #cdbc9e;
+  --text: #2e2617;
+  --muted: #6d6047;
+  --accent: #8a6a2f;
+  --accent-dim: #a67f39;
+  --win: #3d7245;
+  --draw: #857a63;
+  --loss: #a8452f;
+  --light-sq: #f0e2c0;
+  --dark-sq: #b38f5f;
+}
+
+/* Maximum legibility: pure black, pure white, and win/draw/loss colours chosen
+   to stay distinguishable for the common forms of colour blindness. */
+:root[data-theme="contrast"] {
+  --bg: #000000;
+  --bg-2: #0d0d0d;
+  --bg-3: #1a1a1a;
+  --line: #4d4d4d;
+  --text: #ffffff;
+  --muted: #c4c4c4;
+  --accent: #ffd400;
+  --accent-dim: #8a7200;
+  --win: #00d16a;
+  --draw: #b0b0b0;
+  --loss: #ff5c5c;
+  --light-sq: #ffffff;
+  --dark-sq: #595959;
+}
+
+/*
+ * The two ordinary ones: what "dark mode" and "light mode" mean everywhere else.
+ *
+ * No colour cast in the greys and no house accent — plain blue, the colour every
+ * other application uses for the same job. The point of these is to look like
+ * nothing in particular, so nothing here is a design decision to be admired.
+ */
+:root[data-theme="dark"] {
+  --bg: #121212;          /* the standard dark-mode surface */
+  --bg-2: #1e1e1e;
+  --bg-3: #2a2a2a;
+  --line: #3d3d3d;
+  --text: #e8e8e8;
+  --muted: #9e9e9e;
+  --accent: #4a9eff;
+  --accent-dim: #2d5f99;
+  --win: #4caf50;
+  --draw: #9e9e9e;
+  --loss: #ef5350;
+  --light-sq: #c8c8c8;
+  --dark-sq: #6e6e6e;
+}
+
+:root[data-theme="light"] {
+  --bg: #ffffff;          /* white, not off-white — it is "light mode" */
+  --bg-2: #fafafa;
+  --bg-3: #f0f0f0;
+  --line: #d8d8d8;
+  --text: #1a1a1a;
+  --muted: #666666;
+  --accent: #0969da;
+  --accent-dim: #58a6ff;
+  --win: #2e7d32;
+  --draw: #757575;
+  --loss: #c62828;
+  --light-sq: #ededed;
+  --dark-sq: #9c9c9c;
+}
+
+/*
+ * Board palettes, applied on top of whatever the theme chose.
+ *
+ * `data-board` on <html> overrides the theme's two square colours and nothing
+ * else, so the board can be green while the interface stays grey. Absent, the
+ * theme's own squares stand — which is what every existing saved preference
+ * means, so the default costs nobody their current look.
+ */
+/* Oak, not caramel: the dark squares lose most of their orange for the greyed
+   yellow-brown of a real oak board, and the light ones go pale blonde. */
+:root[data-board="wood"]     { --light-sq: #e3d3b0; --dark-sq: #94764c; }
+:root[data-board="green"]    { --light-sq: #ffffff; --dark-sq: #769656; }
+:root[data-board="blue"]     { --light-sq: #dee3e6; --dark-sq: #698aab; }
+:root[data-board="grey"]     { --light-sq: #dcdcdc; --dark-sq: #8f8f8f; }
+:root[data-board="marble"]   { --light-sq: #f0efe8; --dark-sq: #a7a29a; }
+:root[data-board="purple"]   { --light-sq: #e6e0f0; --dark-sq: #8878ad; }
+:root[data-board="coral"]    { --light-sq: #f6dfd4; --dark-sq: #c67b62; }
+:root[data-board="ink"]      { --light-sq: #cfd4da; --dark-sq: #4d5560; }
+:root[data-board="contrast"] { --light-sq: #ffffff; --dark-sq: #4a4a4a; }
+
+:root {
+  --radius: 8px;
+  --mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+  overflow: hidden;
+}
+
+#app { display: flex; height: 100%; }
+
+/* ---------- Sidebar ---------- */
+
+#sidebar {
+  width: 208px;
+  flex: 0 0 208px;
+  background: var(--bg-2);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  gap: 2px;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 9px;
+  padding: 4px 8px 16px;
+  font-weight: 600; font-size: 15px; letter-spacing: .2px;
+}
+.brand-mark { font-size: 22px; color: var(--accent); line-height: 1; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  background: none; border: 0; color: var(--muted);
+  padding: 9px 10px; border-radius: var(--radius);
+  font: inherit; text-align: left; cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.nav-item span { width: 18px; text-align: center; font-size: 15px; }
+.nav-item:hover { background: var(--bg-3); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); color: #fff; }
+
+.sidebar-foot { margin-top: auto; padding: 8px; }
+.badge {
+  font-size: 12px; color: var(--muted);
+  background: var(--bg-3); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 7px 9px; line-height: 1.35;
+  white-space: pre-line; /* the badge text carries its own line break */
+}
+
+/* ---------- Main ---------- */
+
+#main { flex: 1; overflow-y: auto; padding: 0 0 40px; }
+
+.view { display: none; padding: 16px 20px; }
+.view.active { display: block; }
+
+.panel {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.panel h2 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.panel h3 { margin: 18px 0 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+.hint { margin: 0 0 12px; color: var(--muted); font-size: 12.5px; }
+.muted { color: var(--muted); font-size: 12.5px; }
+.hidden { display: none !important; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 1080px) { .split { grid-template-columns: 1fr; } }
+
+.row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Filter bar ---------- */
+
+#filterbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 20px;
+}
+.filter-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.filter-row.extra { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 130px; }
+.f.grow { flex: 1; min-width: 260px; }
+.f.narrow { min-width: 92px; }
+.f > span { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+
+/* A hoverable "?" beside a label, for the things a label cannot say in two
+   words — such as which way round a date is written. */
+.help-dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 13px; height: 13px; margin-left: 3px;
+  border: 1px solid var(--line); border-radius: 50%;
+  font-size: 9px; font-weight: 700; line-height: 1;
+  color: var(--muted); cursor: help; vertical-align: middle;
+}
+.help-dot:hover { border-color: var(--accent); color: var(--accent); }
+
+input, select, textarea {
+  background: var(--bg-3); color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 7px 9px; font: inherit; width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-dim); outline-offset: -1px; }
+textarea { font-family: var(--mono); resize: vertical; margin-bottom: 10px; }
+
+button {
+  background: var(--bg-3); color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 13px; font: inherit; cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+/* color-mix keeps hover states correct in every theme, including the light one,
+   without each theme having to declare its own hover colours. */
+button:hover { background: color-mix(in srgb, var(--bg-3) 84%, var(--text)); }
+button.primary { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+button.primary:hover { background: color-mix(in srgb, var(--accent-dim) 82%, var(--text)); }
+button.ghost { background: transparent; }
+button:disabled { opacity: .5; cursor: default; }
+
+/* Chips never break inside a group — the whole group wraps instead, so the
+   Time control and Period rows stay one line each and keep their labels aligned. */
+.chips { display: flex; gap: 6px; flex-wrap: nowrap; }
+.chip { padding: 7px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.chip.on { background: var(--accent-dim); border-color: var(--accent-dim); color: #fff; }
+
+/* Push the row's trailing buttons to the far right. */
+#more-filters { margin-left: auto; }
+
+/* ---------- Cards ---------- */
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 13px 15px;
+}
+.card .k { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+.card .v { font-size: 23px; font-weight: 600; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.card .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ---------- Tables ---------- */
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* Reference tables in the Explorer are read at a glance and hold many rows, so
+   they run tighter than the rest of the app. */
+.tree-col table { font-size: 12.5px; }
+.tree-col th, .tree-col td { padding: 4px 7px; }
+.tree-col tbody tr { cursor: pointer; }
+.tree-col table .san { font-size: 13px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:hover { background: var(--bg-3); }
+tr.clickable { cursor: pointer; }
+table .san { font-family: var(--mono); font-weight: 600; }
+
+.scroll-y { max-height: 380px; overflow-y: auto; }
+
+/* Win / draw / loss stacked bar */
+.wdl { display: flex; height: 9px; border-radius: 3px; overflow: hidden; min-width: 90px; background: var(--bg-3); }
+.wdl i { display: block; height: 100%; }
+.wdl .w { background: var(--win); }
+.wdl .d { background: var(--draw); }
+.wdl .l { background: var(--loss); }
+
+.score-good { color: var(--win); }
+.score-bad { color: var(--loss); }
+.res-win { color: var(--win); font-weight: 600; }
+.res-loss { color: var(--loss); font-weight: 600; }
+.res-draw { color: var(--draw); font-weight: 600; }
+
+.log {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+  padding: 10px; max-height: 200px; overflow-y: auto;
+  font-family: var(--mono); font-size: 12px; color: var(--muted);
+  white-space: pre-wrap; margin: 12px 0 0;
+}
+
+/* ---------- Board ---------- */
+
+/* Board-dominant split, the way a database GUI lays out: a big board on the
+   left, a dense reference panel on the right. */
+.explorer-grid {
+  display: grid;
+  grid-template-columns: minmax(380px, 39vw) minmax(340px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 1180px) { .explorer-grid { grid-template-columns: 1fr; } }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  /* Rows must be declared too. Without this they auto-size to their content,
+     so ranks holding pieces grow taller than empty ranks and the squares stop
+     being square. */
+  grid-template-rows: repeat(8, 1fr);
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  user-select: none;
+  /* A frame, the way a physical board or a database GUI presents one. */
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, .55),
+    0 0 0 7px color-mix(in srgb, var(--dark-sq) 55%, #000),
+    0 0 0 8px rgba(0, 0, 0, .6),
+    0 6px 22px rgba(0, 0, 0, .45);
+  /* Lets pieces size themselves from the board's own width, so they stay
+     correctly proportioned at any board size — including the mini boards on
+     the Positions view — instead of being pinned to the viewport. */
+  container-type: inline-size;
+}
+/* The frame is drawn outside the element, so leave room for it. */
+.board-wrap { padding: 8px 8px 8px 9px; }
+.pos-card .board { box-shadow: 0 0 0 1px rgba(0, 0, 0, .5); }
+.sq {
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  /* Belt and braces: a square never contributes its own height to the row. */
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.sq.light { background: var(--light-sq); }
+.sq.dark { background: var(--dark-sq); }
+
+/* ---------- Interactive board ---------- */
+
+/* Only squares holding a piece that can actually move get the grab cursor, so
+   the board advertises what is playable without any explanation. */
+.board .sq.movable { cursor: grab; }
+.board .sq.movable:active { cursor: grabbing; }
+/* Touch dragging must move the piece, not scroll the page. */
+.board { touch-action: none; }
+
+/* The piece follows the cursor; its square keeps a faded copy so it is obvious
+   where the move started from.
+
+   Positioned with `transform` from a fixed origin, never left/top: transforms
+   are handled by the compositor, so the piece keeps up with the pointer instead
+   of forcing a layout pass on every frame. */
+.piece-ghost {
+  position: fixed; top: 0; left: 0; z-index: 999;
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  will-change: transform;
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, .55));
+}
+.piece-ghost .pc { width: 100%; height: 100%; object-fit: contain; }
+/* Lifted slightly once it is actually moving, so picking up reads as picking
+   up. Applied to the ghost's contents so it composes with the translate. */
+.piece-ghost.active .pc { transform: scale(1.06); }
+.board .sq.dragging .pc { opacity: .25; }
+
+/* Square currently under a dragged piece. */
+.board .sq.over::after {
+  content: ''; position: absolute; inset: 0;
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--accent) 85%, transparent);
+  pointer-events: none;
+}
+.board .sq.sel::after {
+  content: ''; position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  pointer-events: none;
+}
+.board .sq.lastmove::before {
+  content: ''; position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  pointer-events: none;
+}
+.board .sq.incheck {
+  /* Radial rather than flat so the king still reads clearly on top of it. */
+  background-image: radial-gradient(circle, rgba(220, 60, 50, .9) 0%,
+                                            rgba(220, 60, 50, .55) 45%,
+                                            transparent 72%);
+}
+
+/* Destination markers: a dot on an empty square, a ring on a capture — the
+   convention every online board uses, so it needs no learning. */
+.board .hint {
+  position: absolute; pointer-events: none;
+  width: 30%; height: 30%; border-radius: 50%;
+  background: rgba(20, 20, 20, .34);
+}
+/* A ring drawn as a gradient rather than an inset shadow, so its thickness is a
+   fraction of the square and stays right at every board size. `closest-side`
+   makes 100% mean half the square's width, not its diagonal. */
+.board .hint.capture {
+  width: 100%; height: 100%; border-radius: 0;
+  background: radial-gradient(circle closest-side,
+                              transparent 0 76%,
+                              rgba(20, 20, 20, .32) 76% 100%);
+}
+.sq .pc { position: relative; z-index: 1; }
+
+/* Board coordinates.
+
+   Outside the board in their own gutters, the way a wooden board carries them
+   on its frame. Inside the corner squares they had to sit on top of the square
+   colour and next to the piece artwork, and at any readable size they fought
+   with both — so they get their own space and full contrast instead. */
+.board-frame {
+  display: grid;
+  /* Never taller than the window can hold, so the move list and the engine
+     lines below it stay on screen. Without this a wide window gave a board so
+     tall that replaying a long game meant scrolling to see the moves. The
+     floor keeps it a usable board on a short laptop screen. */
+  max-width: min(100%, max(430px, calc(100vh - 470px)));
+  /* ranks | board | evaluation bar */
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  /* board | files */
+  grid-template-rows: minmax(0, 1fr) auto;
+  /* Wide enough to clear the 8px frame the board draws outside itself, or the
+     labels would sit on top of it. */
+  gap: 12px 13px;
+  min-width: 0;
+  /* Sizes the labels from the board's own width, so they stay in proportion
+     whatever the window is doing. */
+  container-type: inline-size;
+}
+.board-frame > .board { grid-column: 2; grid-row: 1; }
+.board-frame > .eval-col { grid-column: 3; grid-row: 1; }
+.coords {
+  display: grid;
+  user-select: none;
+  color: var(--text);
+  font-weight: 700;
+  font-size: clamp(13px, 2.7cqw, 21px);
+  line-height: 1;
+  letter-spacing: .5px;
+}
+.coords .coord {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Each label spans exactly one rank or file, so it lines up with its own row
+   or column no matter how large the board is. */
+.coords.ranks {
+  grid-column: 1; grid-row: 1;
+  grid-template-rows: repeat(8, 1fr);
+  min-width: 1.2em;
+}
+.coords.files {
+  grid-column: 2; grid-row: 2;
+  grid-template-columns: repeat(8, 1fr);
+  min-height: 1.2em;
+}
+
+/* Promotion chooser, drawn over the destination square. */
+.promo {
+  position: absolute; z-index: 5; top: 0; left: 0;
+  display: grid; grid-template-columns: 1fr; width: 100%;
+  background: var(--bg-2); border: 1px solid var(--accent);
+  border-radius: 4px; box-shadow: 0 6px 18px rgba(0, 0, 0, .55);
+}
+.promo-choice {
+  padding: 0; border: 0; border-radius: 0; background: var(--light-sq);
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+}
+.promo-choice:hover { background: var(--accent); }
+.promo-choice .pc { width: 90%; height: 90%; }
+
+/* ---------- Board arrows ---------- */
+
+/* Overlaid on the board, in the same grid cell, never intercepting a click —
+   the squares underneath still have to be playable. */
+.board-frame > .arrows {
+  grid-column: 2; grid-row: 1;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+/* Titles are the one thing worth hovering, so the shapes take pointer events
+   back individually. */
+.arrows .arrow { pointer-events: auto; }
+
+/* Green for the engine's choice, a paler green for its runner-up, and a
+   distinct blue for what was actually played — so agreement and disagreement
+   between them are both obvious at a glance. Outlined, because a solid shape
+   over a light square and a dark square needs an edge to stay readable on
+   both. */
+.arrows .a-best,   .guide-swatch .a-best   { fill: #1f9d3f; stroke: #1f9d3f; }
+.arrows .a-second, .guide-swatch .a-second { fill: #7ecb87; stroke: #7ecb87; }
+.arrows .a-played, .guide-swatch .a-played { fill: #3b82c4; stroke: #3b82c4; }
+.arrows .arrow polygon, .guide-swatch .arrow polygon { stroke: none; }
+
+/* The dark edge under every arrow. Higher specificity than the colour rules
+   above, which are set on the group and would otherwise be inherited. */
+.arrows .arrow .outline {
+  fill: rgba(6, 10, 8, .58);
+  stroke: rgba(6, 10, 8, .58);
+}
+
+/* With an edge of their own the arrows no longer need to be washed out to stay
+   distinguishable from the board, so they are close to solid — which is what
+   makes them readable on the green and blue themes. */
+.arrows .arrow { opacity: .92; }
+.arrows .a-second, .arrows .a-played { opacity: .88; }
+
+/* The guide. Each row shows the arrow itself rather than a colour chip, so it
+   cannot be mistaken for a generic swatch — and it collapses, because the
+   colours are also carried by the engine line numbers and the dotted move in
+   the table, which is where they are actually consulted. */
+.arrow-help { margin-top: 10px; }
+.arrow-help-toggle {
+  border: 0; background: none; padding: 2px 0;
+  color: var(--muted); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+}
+.arrow-help-toggle::before { content: '▸'; font-size: 10px; }
+.arrow-help-toggle.open::before { content: '▾'; }
+.arrow-help-toggle:hover { color: var(--text); background: none; }
+
+.arrow-guide {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 3px 9px;
+  align-items: center;
+  margin: 6px 0 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.guide-row { display: contents; }
+.guide-swatch { width: 26px; height: 9px; overflow: visible; }
+.guide-move { color: var(--text); font-weight: 600; }
+
+/* The line number is the legend: badge 1 and 2 wear their arrow's colour. */
+.engine-line .el-rank.a-best   { background: #1f9d3f; color: #fff; }
+.engine-line .el-rank.a-second { background: #7ecb87; color: #17240f; }
+
+/* A move that has an arrow on the board, dotted in that arrow's colour so the
+   table row and the arrow read as one thing. */
+.san.arrow-best, .san.arrow-second, .san.arrow-played {
+  position: relative; padding-left: 13px;
+}
+.san.arrow-best::before,
+.san.arrow-second::before,
+.san.arrow-played::before {
+  content: ''; position: absolute; left: 0; top: 50%;
+  width: 7px; height: 7px; margin-top: -3.5px;
+  border-radius: 50%;
+}
+.san.arrow-best::before   { background: #1f9d3f; }
+.san.arrow-second::before { background: #7ecb87; }
+.san.arrow-played::before { background: #3b82c4; }
+
+/* ---------- Explorer tabs ---------- */
+
+/* Two readings of one position, side by side in the same panel: the board stays
+   put and only the answer beside it changes. */
+.tabs {
+  display: flex; gap: 2px;
+  border-bottom: 1px solid var(--line);
+  margin: -4px 0 12px;
+}
+.tabs .tab {
+  border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+  background: none; color: var(--muted);
+  padding: 8px 14px; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.tabs .tab:hover { color: var(--text); background: var(--bg-3); }
+.tabs .tab.on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: none;
+}
+
+/* A player deliberately added to the library, as opposed to someone who merely
+   turned up as their opponent. */
+.lib-player { font-weight: 600; }
+.lib-player::before {
+  content: '★';
+  color: var(--accent);
+  margin-right: 5px;
+  font-size: 11px;
+}
+
+/* ---------- Engine lines ---------- */
+
+.engine-lines { margin-top: 10px; }
+.engine-head {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--muted); margin-bottom: 5px;
+}
+/* Names the line the arrow keys will walk. The highlight shows which row it is;
+   this says what the highlight means. */
+.engine-note { color: var(--accent); }
+
+/* "…and it is also the most played move here", hung off the engine's own row
+   because that move has one arrow, not two. Sits inside the move's cell, so it
+   has to undo the bold that cell carries. */
+.guide-also { color: var(--muted); font-weight: 400; }
+
+/* The search did not reach the depth that was asked for. Takes the palette's
+   warning colour rather than the muted grey: it is a caveat on the number
+   beside it, not a footnote. */
+.engine-cut { color: var(--loss); }
+
+/* A search is running and these are the previous position's lines. Dimmed so
+   they read as "what was true a moment ago" rather than as the answer. */
+.engine-lines.busy .engine-line { opacity: .45; }
+
+.engine-line {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 4px 8px; border-radius: 5px;
+  font-family: var(--mono); font-size: 12.5px;
+  border: 1px solid transparent;
+}
+.engine-line.playable { cursor: pointer; }
+.engine-line.playable:hover { background: var(--bg-3); border-color: var(--line); }
+
+/* The line the arrow keys are walking. */
+.engine-line.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: var(--accent-dim);
+}
+/* The badge belongs to the arrow colour, so the row being followed is marked by
+   its background and border alone — and by "following line N" in the header. */
+
+/* Rank badge: which line is best, without counting rows. */
+.engine-line .el-rank {
+  flex: 0 0 auto;
+  min-width: 17px; padding: 0 4px;
+  text-align: center; border-radius: 3px;
+  background: var(--bg-3); color: var(--muted);
+  font-size: 11px; font-weight: 700; line-height: 16px;
+  align-self: center;
+}
+
+.engine-line .el-score {
+  flex: 0 0 54px; text-align: right; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.engine-line .el-score.plus { color: var(--text); }
+.engine-line .el-score.minus { color: var(--muted); }
+.engine-line .el-score.mate { color: #ffcf6b; }
+/* One line each: a long variation must not reflow the column under the board. */
+.engine-line .el-pv {
+  color: var(--muted); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+th.has-help { cursor: help; text-decoration: underline dotted var(--muted); text-underline-offset: 3px; }
+
+/* Pieces are SVG, so they stay crisp at any board size and look identical on
+   every machine regardless of installed fonts. 97% because the geometry is
+   drawn to fill its viewBox — at smaller percentages the pieces look marooned. */
+.sq .pc {
+  width: 97%;
+  height: 97%;
+  display: block;
+  /* File-based sets are <img>; without this their intrinsic size leaks into
+     the layout and distorts the grid. */
+  object-fit: contain;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* ---------- Piece styles ----------
+ * Pure presentation over one set of geometry. Each style is a block of custom
+ * properties; the .pc rules below read them. That way the same definitions
+ * serve both the live board (scoped by `data-pieces` on <html>) and the
+ * picker's previews (scoped by `data-pieces-preview` on the swatch), so every
+ * swatch shows its own style rather than the active one.
+ */
+
+:root,
+:root[data-pieces="classic"],
+[data-pieces-preview="classic"] {
+  --pcw-fill: #f7f4ee; --pcw-stroke: #1c1a17; --pcw-width: 1.4;
+  --pcb-fill: #242019; --pcb-stroke: #efe9dc; --pcb-width: 1.1;
+  --pcw-detail: #1c1a17; --pcb-detail: #efe9dc;
+  --pcw-eye: #1c1a17;   --pcb-eye: #efe9dc;
+}
+
+/* Flat silhouettes, no outline at all. */
+:root[data-pieces="solid"],
+[data-pieces-preview="solid"] {
+  --pcw-fill: #faf8f3; --pcw-stroke: none; --pcw-width: 0;
+  --pcb-fill: #1e1b17; --pcb-stroke: none; --pcb-width: 0;
+  --pcw-detail: #faf8f3; --pcb-detail: #1e1b17;
+  --pcw-eye: #c9c3b5;   --pcb-eye: #6b6355;
+}
+
+.pc.white { fill: var(--pcw-fill); stroke: var(--pcw-stroke); stroke-width: var(--pcw-width); }
+.pc.black { fill: var(--pcb-fill); stroke: var(--pcb-stroke); stroke-width: var(--pcb-width); }
+.pc.white .detail { stroke: var(--pcw-detail); }
+.pc.black .detail { stroke: var(--pcb-detail); }
+.pc.white .eye { fill: var(--pcw-eye); stroke: none; }
+.pc.black .eye { fill: var(--pcb-eye); stroke: none; }
+
+.board-controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.eval-out { margin-top: 10px; font-family: var(--mono); font-size: 13px; color: var(--muted); min-height: 20px; }
+.eval-score { color: var(--text); font-weight: 700; font-size: 15px; }
+
+/* ---------- Evaluation bar ---------- */
+
+/* The evaluation column sits to the right of the board: score on top, bar below. */
+.eval-col {
+  width: 62px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eval-bar {
+  position: relative;
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #26282c;
+}
+/*
+ * White always fills from the bottom, whichever way the board is facing.
+ * The bar reads as an absolute statement about the position — up is good for
+ * White — so flipping the board must not flip its meaning.
+ */
+.eval-black { position: absolute; inset: 0; background: #2b2d31; }
+.eval-white {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 50%;
+  background: #f0f0ef;
+  transition: height .25s ease;
+}
+/* Hairline at the 50% mark so "equal" is readable at a glance. */
+.eval-zero {
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: 1px; background: rgba(140, 150, 165, .55);
+  pointer-events: none;
+}
+
+.eval-number {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 4px;
+  border-radius: 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+/*
+ * Which side is better, said the same way the bar says it: the chip takes
+ * White's or Black's colour, with text picked to contrast against it.
+ *
+ * These were coloured text on the panel background, which mirrored the bar on a
+ * dark theme and turned near-white text onto a near-white panel on the light
+ * ones — the number simply vanished. Setting both halves of the pair keeps it
+ * legible whatever the theme, and keeps the meaning.
+ */
+.eval-number.plus {
+  background: #f0f0ef; color: #16181b; border-color: #c9c9c5;
+}
+.eval-number.minus {
+  background: #2b2d31; color: #f0f0ef; border-color: #4a4d53;
+}
+.eval-number.mate {
+  background: var(--accent); color: #16130d; border-color: var(--accent);
+}
+.eval-number.pending { color: var(--muted); font-weight: 400; }
+
+.toggle { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.toggle input { width: auto; margin: 0; }
+
+/* Search depth, sitting in the control row beside the board. Sized to the row
+   rather than to the form fields in Settings, which are twice as tall. */
+.depth-pick select {
+  width: auto;
+  margin: 0;
+  padding: 3px 6px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.depth-pick select:hover { border-color: var(--accent-dim); }
+
+.pos-card .eval-tag {
+  font-family: var(--mono); font-size: 11.5px; font-weight: 700;
+  color: var(--muted); margin-left: 6px;
+}
+
+.f-note { align-self: center; padding-bottom: 8px; }
+
+/* ---------- Theme picker ---------- */
+
+.theme-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.theme-swatch {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px; border-radius: var(--radius);
+  border: 2px solid var(--line); background: transparent;
+  min-width: 132px; align-items: stretch;
+}
+.theme-swatch:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+.theme-swatch.on { border-color: var(--accent); }
+.theme-swatch .sw { display: flex; height: 30px; border-radius: 5px; overflow: hidden; }
+.theme-swatch .sw i { flex: 1; display: block; }
+.theme-swatch .nm { font-size: 12.5px; color: var(--text); text-align: left; }
+
+/* Piece-set picker: the same swatch chrome, but the preview is a strip of real
+   pieces on real squares so the choice is judged on the actual artwork.
+   The width is fixed — without it the grid stretched and the previews came out
+   enormous. */
+/* Forty-odd sets is a lot of swatches, so the grid scrolls in place rather
+   than pushing the rest of Settings off the page. */
+.piece-grid {
+  max-height: 460px; overflow-y: auto;
+  padding: 4px; margin-top: 4px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--bg);
+  align-content: flex-start;
+}
+#piece-search { max-width: 280px; }
+
+/* A four-square strip of the board itself — the only preview that means
+   anything for a board colour. */
+.board-swatch .board-prev {
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
+  grid-template-rows: 30px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  width: 120px;
+}
+.board-swatch .board-prev .cell { width: 30px; height: 30px; }
+/* "Follow theme" draws from the live variables, so its preview tracks whatever
+   theme is selected rather than showing colours of its own. */
+.board-swatch .board-prev .from-light { background: var(--light-sq); }
+.board-swatch .board-prev .from-dark { background: var(--dark-sq); }
+
+.piece-swatch { min-width: 224px; }
+.piece-swatch .prev {
+  display: grid;
+  grid-template-columns: repeat(4, 54px);
+  grid-template-rows: 54px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  width: 216px;
+}
+.piece-swatch .prev .cell {
+  width: 54px; height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.piece-swatch .prev .pc { object-fit: contain; }
+.piece-swatch .prev .cell:nth-child(odd) { background: var(--light-sq); }
+.piece-swatch .prev .cell:nth-child(even) { background: var(--dark-sq); }
+.piece-swatch .prev .pc { width: 97%; height: 97%; }
+/* Capped and scrollable. A 40-move game is a lot of text, and letting it run to
+   its natural height pushed the engine lines off the bottom of the window —
+   which is the same problem, one element further down. */
+.line {
+  margin-top: 8px; font-family: var(--mono); font-size: 13px;
+  color: var(--muted); word-break: break-word;
+  max-height: 22vh; overflow-y: auto; padding-right: 4px;
+}
+.line b { color: var(--text); font-weight: 600; }
+.line .crumb { cursor: pointer; }
+.line .crumb:hover { color: var(--accent); text-decoration: underline; }
+
+/* Every move is clickable: played moves in full colour, moves you stepped back
+   over greyed so it is clear there is something to go forward to. */
+.line .mv { color: var(--text); font-weight: 600; cursor: pointer; border-radius: 3px; }
+.line .mv:hover { background: var(--bg-3); }
+.line .mv.ahead { color: var(--muted); font-weight: 400; }
+
+/* The move the board is currently showing — without this a long line gives no
+   sense of where you are in it. */
+.line .mv.current {
+  background: var(--accent-dim);
+  color: #fff;
+  padding: 1px 4px;
+  margin: 0 -1px;
+}
+.line .mv.current:hover { background: var(--accent); }
+
+/* Everything from the branch onwards belongs to the side line, so the whole
+   tail is tinted rather than just the one move that caused it. */
+.line .mv.in-branch { color: var(--accent); }
+.line .mv.in-branch.ahead { color: color-mix(in srgb, var(--accent) 55%, var(--muted)); }
+.line .mv.in-branch.current { color: #fff; }
+
+/* The move that did the leaving. */
+.line .mv.sideline {
+  text-decoration: underline dotted currentColor;
+  text-underline-offset: 3px;
+}
+
+/* Past the end of a loaded game. Listed after .in-branch on purpose: a move can
+   be both, and "nobody played this" is the more important of the two. */
+.line .mv.beyond { color: var(--muted); font-weight: 400; font-style: italic; }
+.line .mv.beyond.current { color: #fff; }
+
+/* Where the loaded game stops. A label, deliberately not shaped like a move. */
+.line .line-end {
+  display: inline-block;
+  margin: 0 5px;
+  padding: 0 6px;
+  border: 1px dashed var(--muted);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; white-space: nowrap;
+}
+
+/* ---------- Opening name ---------- */
+
+/* The heading for the move list under it, so it reads as a title rather than
+   as another row of data. */
+.opening-name {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.3;
+}
+.opening-name b { color: var(--text); font-weight: 600; }
+.opening-name .past-book { color: var(--muted); font-size: 12.5px; }
+
+/* ---------- State banners under the board ---------- */
+
+/* Two things can be true at once — past the end of a game, and off the
+   engine's main line — so the bar stacks one row for each. */
+.branch-bar { display: grid; gap: 8px; margin-top: 10px; }
+.branch-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 7px 10px;
+  border: 1px solid var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 12.5px;
+}
+
+/* Past the end of a game gets its own look rather than the accent one: it is a
+   different kind of "not the main line" — those moves were never played at all,
+   by anyone. */
+.branch-row.past-end {
+  border: 1px solid var(--line);
+  border-left: 3px dashed var(--muted);
+  background: var(--bg-3);
+}
+.branch-row.past-end .branch-tag { color: var(--text); }
+.branch-tag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .8px;
+  color: var(--accent); white-space: nowrap;
+}
+.branch-text { color: var(--muted); }
+.branch-text b { color: var(--text); font-family: var(--mono); }
+.branch-back { margin-left: auto; padding: 4px 10px; font-size: 12.5px; white-space: nowrap; }
+
+/* ---------- Positions grid ---------- */
+
+.pos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; padding: 0 20px; }
+.pos-card {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 10px; cursor: pointer;
+  transition: border-color .12s, transform .12s;
+}
+.pos-card:hover { border-color: var(--accent-dim); transform: translateY(-1px); }
+.pos-card .mini { margin-bottom: 8px; }
+.pos-card .mini .sq { font-size: 18px; }
+.pos-card .meta { display: flex; justify-content: space-between; font-size: 12px; }
+.pos-card .meta .g { color: var(--muted); }
+
+/* ---------- Favourites ---------- */
+
+/* A star has to read as a toggle at a glance, so it drops the button chrome
+   entirely and says everything with its colour: hollow and grey means "not
+   saved", filled and accent-coloured means "saved". */
+.star {
+  background: none; border: none; padding: 2px 5px;
+  font-size: 16px; line-height: 1; color: var(--muted);
+}
+.star:hover { background: none; color: var(--accent); }
+.star.on { color: var(--accent); }
+
+.fav-name { font-weight: 600; }
+td.nowrap { white-space: nowrap; }
+
+/* ---------- Reviewing a game ---------- */
+
+/* Sits above the board and says what is on it. The star is first because that
+   is the action: you are looking at the game, and this is where you decide it
+   is worth keeping. */
+.review-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 10px; padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg-2);
+  font-size: 12.5px;
+}
+.review-bar .star { font-size: 18px; }
+.review-label { color: var(--muted); }
+.review-label b { color: var(--text); font-weight: 600; margin-right: 4px; }
+.review-link { color: var(--accent); margin-left: auto; }
+.review-done { padding: 4px 10px; font-size: 12.5px; }
+
+/* An offer to compute something, shown where its absence is felt. */
+.scan-strip {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 12px; padding: 8px 11px;
+  border: 1px dashed var(--line); border-radius: 6px;
+  color: var(--muted); font-size: 12.5px;
+}
+.scan-strip button { margin-left: auto; padding: 5px 12px; font-size: 12.5px; }
+.fav-actions { display: inline-flex; gap: 6px; }
+.fav-actions button { padding: 5px 9px; font-size: 12px; }
+
+/* ---------- Modal ---------- */
+
+.modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, .55);
+}
+.modal-card {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px 20px;
+  width: min(460px, 92vw);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .55);
+}
+.modal-card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.modal-card .hint { margin-bottom: 12px; }
+.modal-actions { justify-content: flex-end; margin-top: 14px; }
+
+/* ---------- Toast ---------- */
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--bg-3); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 10px 16px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.5); z-index: 100; max-width: 70%;
+}
+.toast.err { border-color: var(--loss); color: #ffb4ae; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--line) 80%, var(--text));
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--line) 60%, var(--text)); }

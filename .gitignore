@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.pyc
+
+# The database and settings. Personal data, not source — the database holds
+# every game you have ever synced and config.json holds your account names.
+data/
+
+# Engine binaries (Stockfish is ~114 MB, and GPL-3 code we do not redistribute).
+engines/
+stockfish/
+
+# PyInstaller output.
+build/
+dist/
+
+# Development-only tooling, restored by `npm install`.
+node_modules/
+
+# Editor and OS noise.
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

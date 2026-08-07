@@ -1,0 +1,10 @@
+{
+  "name": "hindsightchess-devtools",
+  "private": true,
+  "description": "Development-only tooling. Not part of the shipped app: PyInstaller bundles web/ and assets/ only.",
+  "type": "module",
+  "scripts": {
+    "test:ui": "node tools/uitest.mjs . http://127.0.0.1:8799"
+  },
+  "devDependencies": { "jsdom": "^26.0.0" }
+}
