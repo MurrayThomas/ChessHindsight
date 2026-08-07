@@ -2,6 +2,10 @@
 
 *See your own chess clearly, after the fact.*
 
+**Created and written by Thomas Murray** ([@MurrayThomas](https://github.com/MurrayThomas)).
+Copyright © 2026 Thomas Murray. Released under the GPL-3.0-or-later — see
+[Licence](#licence).
+
 A local desktop app for analyzing chess games in bulk. It pulls your games from
 Chess.com and Lichess (and any PGN file you point it at), stores them in SQLite,
 and answers questions that the built-in tools on those sites don't:
@@ -306,6 +310,10 @@ was stuck and the exact line it was stuck on.
 
 ## Licence
 
+ChessHindsight is **copyright © 2026 Thomas Murray**, who wrote it and holds the
+copyright in it. The licence below governs how it may be copied and changed; it
+does not transfer authorship, and every copy has to keep this notice.
+
 **GPL-3.0-or-later.** See [LICENSE](LICENSE).
 
 This is not a preference. The app imports [python-chess][pc] in-process — move
@@ -327,7 +335,11 @@ Two things need attention first — both fine for a private, personal repo:
    are CC BY-NC-SA (non-commercial) and a handful sit under Lichess's own
    "Exceptions (non-free)" heading. `assets/NOTICE.md` records which is which,
    set by set. A public release should drop the non-free ones.
-2. **Licence headers.** The source files carry no per-file headers yet.
+2. **Licence headers.** `app.py` and `chesshindsight/__init__.py` carry the
+   copyright and GPL notice; the remaining modules do not have per-file headers
+   yet. The two entry points are what a reader opens first, so authorship is
+   stated where it will actually be seen, but a public release should finish
+   the job across the tree.
 
 The opening-name book (`assets/openings.tsv`) is safe either way: it is built
 from [lichess-org/chess-openings][co], which is CC0.

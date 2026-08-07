@@ -1,3 +1,14 @@
+# ChessHindsight — bulk analysis of your own chess games.
+# Copyright (C) 2026 Thomas Murray <https://github.com/MurrayThomas>
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the Licence, or (at your option) any later
+# version. It is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public Licence for more details, in
+# the LICENSE file distributed with this program.
+
 """ChessHindsight desktop entry point.
 
 Starts the local API server on a loopback port, then opens a native window

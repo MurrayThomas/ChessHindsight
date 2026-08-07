@@ -1,5 +1,7 @@
 {
   "name": "chesshindsight-devtools",
+  "author": "Thomas Murray (https://github.com/MurrayThomas)",
+  "license": "GPL-3.0-or-later",
   "private": true,
   "description": "Development-only tooling. Not part of the shipped app: PyInstaller bundles web/ and assets/ only.",
   "type": "module",
