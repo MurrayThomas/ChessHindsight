@@ -1948,7 +1948,10 @@ const BOARDS = [
   { id: 'grey',     label: 'Grey',     note: 'neutral',   light: '#dcdcdc', dark: '#8f8f8f' },
   { id: 'marble',   label: 'Marble',   note: 'soft',      light: '#f0efe8', dark: '#a7a29a' },
   { id: 'purple',   label: 'Purple',   note: 'muted',     light: '#e6e0f0', dark: '#8878ad' },
-  { id: 'coral',    label: 'Coral',    note: 'warm',      light: '#f6dfd4', dark: '#c67b62' },
+  // `id` is what gets written to config.json, so it stays 'coral' even though
+  // the colours are no longer coral — renaming it would orphan a saved
+  // preference. The label is the part anyone actually reads.
+  { id: 'coral',    label: 'Classic',  note: 'chess.com', light: '#f0d9b5', dark: '#b58863' },
   { id: 'ink',      label: 'Ink',      note: 'slate',     light: '#cfd4da', dark: '#4d5560' },
   { id: 'contrast', label: 'Contrast', note: 'high vis',  light: '#ffffff', dark: '#4a4a4a' },
 ];

@@ -231,7 +231,12 @@
 :root[data-board="grey"]     { --light-sq: #dcdcdc; --dark-sq: #8f8f8f; }
 :root[data-board="marble"]   { --light-sq: #f0efe8; --dark-sq: #a7a29a; }
 :root[data-board="purple"]   { --light-sq: #e6e0f0; --dark-sq: #8878ad; }
-:root[data-board="coral"]    { --light-sq: #f6dfd4; --dark-sq: #c67b62; }
+/* The brown every online board defaults to. It sits deliberately close to
+   `wood` above and is not a duplicate of it: wood is oak with the orange taken
+   out, this is the warmer, more saturated tan-and-chestnut pair that Chess.com
+   and Lichess both ship as their default, which is the one most people have
+   spent years reading positions on. */
+:root[data-board="coral"]    { --light-sq: #f0d9b5; --dark-sq: #b58863; }
 :root[data-board="ink"]      { --light-sq: #cfd4da; --dark-sq: #4d5560; }
 :root[data-board="contrast"] { --light-sq: #ffffff; --dark-sq: #4a4a4a; }
 
