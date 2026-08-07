@@ -19,5 +19,5 @@ echo Installing dependencies...
 ".venv\Scripts\python.exe" -m pip install -r requirements.txt
 
 echo.
-echo Setup complete. Launch with HindsightChess.bat
+echo Setup complete. Launch with ChessHindsight.bat
 pause

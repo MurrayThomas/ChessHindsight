@@ -14,15 +14,20 @@ from .paths import app_dir
 # packaged. The database, settings and engine all live here.
 APP_ROOT = app_dir()
 DATA_DIR = APP_ROOT / "data"
-DB_PATH = DATA_DIR / "hindsightchess.db"
+DB_PATH = DATA_DIR / "chesshindsight.db"
 CONFIG_PATH = DATA_DIR / "config.json"
 
-# What the database was called before the app was renamed.
-LEGACY_DB_PATH = DATA_DIR / "chessanalyzer.db"
+# What the database was called under previous names for the app, newest first.
+# The app has been renamed twice; a database that never opened the intermediate
+# build still sits under the oldest name, so every name has to stay claimable.
+LEGACY_DB_PATHS = [
+    DATA_DIR / "hindsightchess.db",
+    DATA_DIR / "chessanalyzer.db",
+]
 
 
 def adopt_legacy_db() -> bool:
-    """Bring a database written under the old name forward to the new one.
+    """Bring a database written under an old name forward to the current one.
 
     Returns True if anything was moved. Without this the rename silently starts
     a fresh, empty database beside a perfectly good one — which looks exactly
@@ -33,14 +38,18 @@ def adopt_legacy_db() -> bool:
     under the new name is how a file gets corrupted, so both are only moved when
     the destination is genuinely absent.
     """
-    if DB_PATH.exists() or not LEGACY_DB_PATH.exists():
+    if DB_PATH.exists():
         return False
-    for suffix in ("", "-wal", "-shm"):
-        old = LEGACY_DB_PATH.with_name(LEGACY_DB_PATH.name + suffix)
-        new = DB_PATH.with_name(DB_PATH.name + suffix)
-        if old.exists() and not new.exists():
-            old.replace(new)
-    return True
+    for legacy in LEGACY_DB_PATHS:
+        if not legacy.exists():
+            continue
+        for suffix in ("", "-wal", "-shm"):
+            old = legacy.with_name(legacy.name + suffix)
+            new = DB_PATH.with_name(DB_PATH.name + suffix)
+            if old.exists() and not new.exists():
+                old.replace(new)
+        return True
+    return False
 
 # Positions are indexed for tree queries only up to this ply. Full move lists are
 # always stored on the game itself; this cap just bounds the size of the position
@@ -93,7 +102,23 @@ class Config:
             cfg.engine_path = find_stockfish()
             cfg.save()
             return cfg
-        raw = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        try:
+            raw = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            raw = None
+        if not isinstance(raw, dict):
+            # A config that will not parse must not stop the app from starting.
+            # The windowed build has no console, so the traceback this used to
+            # raise went nowhere and the app simply never opened. Keep the bad
+            # file instead of overwriting it, so it can still be looked at.
+            try:
+                CONFIG_PATH.replace(CONFIG_PATH.with_suffix(".json.bad"))
+            except OSError:
+                pass
+            cfg = cls()
+            cfg.engine_path = find_stockfish()
+            cfg.save()
+            return cfg
         accounts = [Account(**a) for a in raw.pop("accounts", [])]
         # Drop unknown keys so an older config file never crashes a newer build.
         known = {f for f in cls.__dataclass_fields__ if f != "accounts"}
@@ -103,9 +128,14 @@ class Config:
     def save(self) -> None:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         payload = asdict(self)
-        CONFIG_PATH.write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        text = json.dumps(payload, indent=2, ensure_ascii=False)
+        # Write to a sibling and rename over the top, because os.replace is
+        # atomic. Writing in place leaves the file truncated if the process dies
+        # partway through — and this is saved on every settings change, so the
+        # window for that is every time a theme is picked.
+        tmp = CONFIG_PATH.with_name(CONFIG_PATH.name + ".tmp")
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, CONFIG_PATH)
 
     def is_me(self, username: str | None) -> bool:
         return bool(username) and username.lower() in {m.lower() for m in self.me}

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, asdict
 
-USER_AGENT = "HindsightChess/0.1 (personal game analysis tool)"
+USER_AGENT = "ChessHindsight/0.1 (personal game analysis tool)"
 
 # Standard speed buckets, keyed off estimated game duration in seconds
 # (base + 40 * increment), matching how Lichess classifies time controls.

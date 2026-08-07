@@ -10,10 +10,10 @@ import argparse
 import json
 import sys
 
-from hindsightchess import stats, sync, tree
-from hindsightchess.config import Config
-from hindsightchess.db import connect, init_db
-from hindsightchess.query import GameFilter
+from chesshindsight import stats, sync, tree
+from chesshindsight.config import Config
+from chesshindsight.db import connect, init_db
+from chesshindsight.query import GameFilter
 
 
 def _filter_from_args(args) -> GameFilter:
@@ -192,7 +192,7 @@ def cmd_games(args, conn, config) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="cli.py", description=__doc__)
     p.add_argument(
-        "--db", help="path to an alternate database (default: data/hindsightchess.db)"
+        "--db", help="path to an alternate database (default: data/chesshindsight.db)"
     )
     sub = p.add_subparsers(dest="command", required=True)
 

@@ -174,7 +174,7 @@ def make_server(api: Api, host: str = "127.0.0.1", port: int = 8731) -> Threadin
 def serve(host: str = "127.0.0.1", port: int = 8731, api: Api | None = None) -> None:
     api = api or Api()
     server = make_server(api, host, port)
-    print(f"HindsightChess dev server on http://{host}:{port}")
+    print(f"ChessHindsight dev server on http://{host}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -1,5 +1,5 @@
 {
-  "name": "hindsightchess-devtools",
+  "name": "chesshindsight-devtools",
   "private": true,
   "description": "Development-only tooling. Not part of the shipped app: PyInstaller bundles web/ and assets/ only.",
   "type": "module",

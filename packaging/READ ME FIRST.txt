@@ -1,0 +1,78 @@
+ChessHindsight
+==============
+
+A desktop app for analysing your own chess games in bulk, from Chess.com,
+Lichess and PGN files.
+
+
+RUNNING IT
+----------
+
+Unzip this folder anywhere you like (Desktop, Documents, a USB stick - it does
+not matter, and there is no installer). Then double-click:
+
+    ChessHindsight.exe
+
+On first launch Windows SmartScreen will probably show a blue "Windows
+protected your PC" box. That is because the app is not code-signed, not because
+anything is wrong with it. Click "More info", then "Run anyway". You will only
+see this once.
+
+Your antivirus may also take an interest. Apps built this way (Python packed
+into a single .exe) trip heuristic detection fairly often. It is a false
+positive.
+
+The app creates a "data" folder next to the exe on first run. That is where
+your games, settings and logs live. Keep it next to the exe - if you move the
+app somewhere else, move the whole folder and your history comes with it.
+
+
+GETTING YOUR GAMES IN
+---------------------
+
+Open Settings inside the app and add your Chess.com and/or Lichess username,
+then run a sync. The first sync downloads your whole history and can take a
+while; later syncs only fetch what is new.
+
+
+THE ENGINE (OPTIONAL BUT RECOMMENDED)
+-------------------------------------
+
+Everything except position evaluation works without an engine. For evaluations,
+blunder detection and best-move lines you need Stockfish. It is free, and it is
+a separate download only because it is ~110 MB on its own - bigger than this
+entire app.
+
+  1. Go to  https://stockfishchess.org/download/
+  2. Download the Windows build ("AVX2" is the right choice on any reasonably
+     modern PC; pick "SSE4.1 / POPCNT" if AVX2 will not start).
+  3. Unzip it.
+  4. Put the stockfish-....exe file into a folder named "stockfish" sitting
+     next to ChessHindsight.exe, so you end up with:
+
+         ChessHindsight.exe
+         stockfish\stockfish-windows-x86-64-avx2.exe
+         data\
+
+The app finds it automatically from there - no configuration needed. It will
+also find it on its own if you simply unzipped Stockfish into your Downloads
+folder. Failing both, you can point at the binary directly in Settings.
+
+
+REQUIREMENTS
+------------
+
+Windows 10 or 11, 64-bit.
+
+The UI renders through Microsoft Edge WebView2, which is already installed on
+Windows 11 and on up-to-date Windows 10. In the unlikely event the window opens
+blank or does not appear, install the "Evergreen Standalone Installer" from:
+
+    https://developer.microsoft.com/microsoft-edge/webview2/
+
+
+IF SOMETHING GOES WRONG
+-----------------------
+
+There is a log at  data\chesshindsight.log  next to the exe. Send that along
+with a description of what you were doing and it should be diagnosable.

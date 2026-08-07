@@ -1,5 +1,5 @@
 @echo off
-rem Build HindsightChess.exe into dist\
+rem Build ChessHindsight.exe into dist\
 cd /d "%~dp0"
 
 if not exist ".venv\Scripts\python.exe" (
@@ -12,8 +12,8 @@ echo Installing/updating PyInstaller...
 ".venv\Scripts\python.exe" -m pip install --quiet --upgrade pyinstaller
 
 echo.
-echo Building HindsightChess.exe ...
-".venv\Scripts\python.exe" -m PyInstaller HindsightChess.spec --noconfirm --clean
+echo Building ChessHindsight.exe ...
+".venv\Scripts\python.exe" -m PyInstaller ChessHindsight.spec --noconfirm --clean
 if errorlevel 1 (
     echo.
     echo Build FAILED.
@@ -22,7 +22,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Build complete: dist\HindsightChess.exe
+echo Build complete: dist\ChessHindsight.exe
 echo.
 echo Copying Stockfish next to the exe...
 if exist "stockfish" (
@@ -34,5 +34,5 @@ if exist "stockfish" (
 )
 
 echo.
-echo You can now run dist\HindsightChess.exe
+echo You can now run dist\ChessHindsight.exe
 pause

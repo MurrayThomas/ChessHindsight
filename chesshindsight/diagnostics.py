@@ -27,9 +27,9 @@ import traceback
 
 from .paths import app_dir
 
-LOG_NAME = "hindsightchess.log"
+LOG_NAME = "chesshindsight.log"
 
-log = logging.getLogger("hindsightchess")
+log = logging.getLogger("chesshindsight")
 
 _watchdog: "Watchdog | None" = None
 _log_file = None
@@ -86,7 +86,7 @@ def setup(level: int = logging.INFO) -> None:
     threading.excepthook = _thread_excepthook
 
     log.info("=" * 60)
-    log.info("HindsightChess starting (python %s)", sys.version.split()[0])
+    log.info("ChessHindsight starting (python %s)", sys.version.split()[0])
 
 
 def dump_all_threads(reason: str) -> None:

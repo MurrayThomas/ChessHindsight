@@ -22,7 +22,7 @@ DEST = ROOT / "web" / "piecesets"
 
 API = "https://api.github.com/repos/lichess-org/lila/contents/public/piece"
 RAW = "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece"
-HEADERS = {"User-Agent": "HindsightChess-asset-fetch"}
+HEADERS = {"User-Agent": "ChessHindsight-asset-fetch"}
 
 PIECES = [f"{c}{p}" for c in ("w", "b") for p in ("K", "Q", "R", "B", "N", "P")]
 

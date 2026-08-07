@@ -1,4 +1,4 @@
-"""HindsightChess desktop entry point.
+"""ChessHindsight desktop entry point.
 
 Starts the local API server on a loopback port, then opens a native window
 pointed at it. The window and the browser therefore run identical code.
@@ -24,11 +24,11 @@ os.environ.setdefault("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--lang=en-GB")
 
 import webview  # noqa: E402
 
-from hindsightchess import diagnostics
-from hindsightchess.api import Api
-from hindsightchess.engine import close_engine
-from hindsightchess.paths import app_dir, is_frozen, resource_dir
-from hindsightchess.server import serve, serve_background
+from chesshindsight import diagnostics
+from chesshindsight.api import Api
+from chesshindsight.engine import close_engine
+from chesshindsight.paths import app_dir, is_frozen, resource_dir
+from chesshindsight.server import serve, serve_background
 
 
 def _ensure_streams() -> None:
@@ -47,7 +47,7 @@ def _ensure_streams() -> None:
         try:
             log_dir = app_dir() / "data"
             log_dir.mkdir(parents=True, exist_ok=True)
-            sink = open(log_dir / "hindsightchess.log", "a", encoding="utf-8", buffering=1)
+            sink = open(log_dir / "chesshindsight.log", "a", encoding="utf-8", buffering=1)
         except OSError:
             sink = None
     if sink is None:
@@ -117,7 +117,7 @@ def _set_app_user_model_id() -> None:
         import ctypes
 
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-            "HindsightChess.Desktop.1"
+            "ChessHindsight.Desktop.1"
         )
     except Exception:
         diagnostics.log.debug("could not set AppUserModelID", exc_info=True)
@@ -237,7 +237,7 @@ def run_desktop(debug: bool = False) -> None:
     _assert_bridge_safe(js_api)
 
     window = webview.create_window(
-        "HindsightChess",
+        "ChessHindsight",
         base_url,
         js_api=js_api,
         width=1560,
@@ -263,7 +263,7 @@ def main(argv: list[str] | None = None) -> int:
     _ensure_streams()
     diagnostics.setup()
     parser = argparse.ArgumentParser(
-        prog="hindsightchess",
+        prog="chesshindsight",
         description="Analyze bulk chess games from Chess.com, Lichess and PGN files.",
     )
     parser.add_argument(

@@ -1,4 +1,4 @@
-# HindsightChess
+# ChessHindsight
 
 *See your own chess clearly, after the fact.*
 
@@ -18,11 +18,11 @@ and answers questions that the built-in tools on those sites don't:
 Run `setup.bat` once. It creates a virtual environment and installs the three
 dependencies (`chess`, `requests`, `pywebview`).
 
-Then launch with **`HindsightChess.bat`**.
+Then launch with **`ChessHindsight.bat`**.
 
 ## Building a standalone .exe
 
-Run **`build.bat`**. It produces a single **`dist\HindsightChess.exe`** (~14 MB)
+Run **`build.bat`**. It produces a single **`dist\ChessHindsight.exe`** (~14 MB)
 with Python, the libraries and the whole UI bundled inside — no virtual
 environment needed to run it. Stockfish is copied to `dist\stockfish\` rather
 than bundled, since it is ~109 MB on its own.
@@ -31,7 +31,7 @@ The resulting folder is self-contained and portable:
 
 ```
 dist\
-  HindsightChess.exe        the app
+  ChessHindsight.exe        the app
   stockfish\               engine (optional)
   data\                    created on first run: database, settings, log
 ```
@@ -44,8 +44,43 @@ move the app and its history somewhere else.
 Since the exe is unsigned, Windows SmartScreen may warn on first launch —
 "More info" then "Run anyway".
 
-**Note:** the build overwrites `dist\HindsightChess.exe`, so close the app first
+**Note:** the build overwrites `dist\ChessHindsight.exe`, so close the app first
 or the build fails with "Access is denied".
+
+## Sending it to someone else
+
+Run **`package.bat --with-engine`**. It produces a single self-contained
+**`dist\ChessHindsight-windows-with-stockfish.zip`** (~88 MB): the exe, the
+engine, and instructions. The recipient unzips it and double-clicks — nothing to
+download, nothing to configure.
+
+Plain **`package.bat`** builds the same thing without the engine
+(`dist\ChessHindsight-windows.zip`, ~15 MB) for when bandwidth matters more than
+convenience; the recipient then fetches Stockfish themselves.
+
+|                          | `package.bat` | `--with-engine` |
+| ------------------------ | ------------- | --------------- |
+| Zip size                 | ~15 MB        | ~88 MB          |
+| Recipient needs Stockfish| yes           | no              |
+
+Each variant ships the matching `READ ME FIRST.txt` from `packaging\` — one
+sends the reader off to stockfishchess.org, the other tells them it is already
+there. Both cover the SmartScreen warning the unsigned exe triggers.
+
+Do **not** just zip `dist\`. That folder contains `data\`: the database of every
+game ever synced, plus a `config.json` holding the account names behind them.
+`package.bat` stages a clean copy rather than compressing `dist\` in place, then
+re-opens the finished zip and refuses to hand it over if any `data\` entry,
+database, log or `config.json` made it in.
+
+`--with-engine` copies the **whole** `stockfish\` folder, not just the binary.
+Stockfish is GPL-3, so conveying the executable obliges us to convey its
+corresponding source too — and `src\` is under 1 MB against a 109 MB binary, so
+mirroring the upstream archive verbatim is both the cheapest and the most
+defensible way to satisfy that.
+
+Either way the zip is too big to attach to an email, so send a link — Google
+Drive, Dropbox, WeTransfer.
 
 ### The icon
 
@@ -213,7 +248,7 @@ Add `--db <path>` to any command to use a different database file.
 ## How it works
 
 ```
-hindsightchess/
+chesshindsight/
   config.py     settings + account list, persisted to data/config.json
   db.py         SQLite schema and connection handling
   sources/      one adapter per origin, all producing NormalizedGame
@@ -248,7 +283,7 @@ window at it, so there is one code path to reason about and test.
 
 ## If it freezes or crashes
 
-Every run writes to **`data\hindsightchess.log`** (next to the exe, or in the
+Every run writes to **`data\chesshindsight.log`** (next to the exe, or in the
 project folder when run from source). It captures startup, unhandled exceptions
 on any thread, JavaScript errors, and native crashes.
 
@@ -257,13 +292,13 @@ for 12 seconds while the process is alive, a watchdog writes a stack trace for
 **every thread** into the log. Windows' own "Application Hang" event tells you
 nothing about the cause — this does.
 
-If the app hangs again, send `data\hindsightchess.log`. Look for
+If the app hangs again, send `data\chesshindsight.log`. Look for
 `no heartbeat from the UI` — the dump immediately after it names the thread that
 was stuck and the exact line it was stuck on.
 
 ## Notes
 
-- The database lives in `data/hindsightchess.db`, settings in `data/config.json`.
+- The database lives in `data/chesshindsight.db`, settings in `data/config.json`.
   Both are gitignored. Back up that folder and you've backed up everything.
 - The server binds to `127.0.0.1` only.
 - A Lichess API token (Settings) is optional; it raises the export rate limit,

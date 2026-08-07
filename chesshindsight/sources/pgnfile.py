@@ -77,9 +77,17 @@ def read_pgn(path: Path | str, progress=None) -> Iterator[NormalizedGame]:
     count = 0
     with path.open("r", encoding="utf-8", errors="replace") as fh:
         while True:
+            before = fh.tell()
             try:
                 game = chess.pgn.read_game(fh)
             except Exception:
+                # Skip a game that will not parse and carry on with the file —
+                # but only if the reader actually consumed something. A failure
+                # that leaves the handle where it was would otherwise be retried
+                # from the same offset forever, and an import that spins on one
+                # damaged game looks exactly like the app having frozen.
+                if fh.tell() == before:
+                    break
                 continue
             if game is None:
                 break

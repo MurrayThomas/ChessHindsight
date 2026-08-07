@@ -163,7 +163,12 @@ class Api:
         """
         with self._sync_lock:
             if self._sync["running"]:
-                return dict(self._sync)
+                # Copy the log rather than handing back the live list: the
+                # running worker appends to it through _progress, and a list
+                # that grows while the transport is serializing it raises
+                # mid-response. Built inline because sync_status() takes this
+                # same lock, which is not reentrant.
+                return dict(self._sync, log=list(self._sync["log"])[-40:])
             self._sync.update(
                 running=True, done=False, error=None, result=None,
                 message=starting, log=[],

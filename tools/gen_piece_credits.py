@@ -176,7 +176,7 @@ def write_notice(sets: list[str], credits: dict[str, tuple[str, str]]) -> None:
 
 
 def main() -> int:
-    req = urllib.request.Request(COPYING, headers={"User-Agent": "HindsightChess"})
+    req = urllib.request.Request(COPYING, headers={"User-Agent": "ChessHindsight"})
     with urllib.request.urlopen(req, timeout=60) as resp:
         credits = parse_copying(resp.read().decode("utf-8"))
 

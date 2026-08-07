@@ -1,4 +1,4 @@
-/* HindsightChess frontend — plain ES modules-free JS, no build step. */
+/* ChessHindsight frontend — plain ES modules-free JS, no build step. */
 
 'use strict';
 
@@ -2689,7 +2689,7 @@ function init() {
   api('sync_status').then((st) => { if (st.running) startSyncPolling(); });
 
   // Heartbeat. If these stop arriving the backend watchdog dumps every thread's
-  // stack to data/hindsightchess.log, which is how a UI freeze gets diagnosed.
+  // stack to data/chesshindsight.log, which is how a UI freeze gets diagnosed.
   const beat = () => { api('ping').catch(() => {}); };
   beat();
   setInterval(beat, 4000);

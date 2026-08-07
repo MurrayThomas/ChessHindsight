@@ -27,14 +27,25 @@ def _win_pct(wins: int, losses: int, draws: int) -> float | None:
     return round(100.0 * wins / total, 1)
 
 
-def _row_to_record(row: sqlite3.Row, label_key: str | None = None) -> dict:
+def _row_to_record(
+    row: sqlite3.Row, label_key: str | None = None, has_player: bool = True
+) -> dict:
+    """One aggregate row. `has_player` is whether a player is in focus.
+
+    Without one there is no "you" to have won, so the win/loss expressions match
+    nothing and every count comes back zero. Reporting that as 0.0% states a
+    fact that was never measured — and 0% renders red, so an unfiltered
+    dashboard reads as a catastrophic record. None is the honest answer, and the
+    frontend already draws it as an em dash. tree.py has always done this; this
+    is the same rule.
+    """
     wins, losses, draws = row["wins"] or 0, row["losses"] or 0, row["draws"] or 0
     record = {
         "games": row["games"] or 0,
         "wins": wins,
         "losses": losses,
         "draws": draws,
-        "win_pct": _win_pct(wins, losses, draws),
+        "win_pct": _win_pct(wins, losses, draws) if has_player else None,
     }
     if label_key is not None:
         record[label_key] = row[label_key]
@@ -55,7 +66,7 @@ def overview(conn: sqlite3.Connection, flt: GameFilter) -> dict:
         params,
     ).fetchone()
 
-    result = _row_to_record(row)
+    result = _row_to_record(row, has_player=bool(flt.player))
     result["first_game"] = row["first_game"]
     result["last_game"] = row["last_game"]
 
@@ -91,7 +102,7 @@ def by_time_control(conn: sqlite3.Connection, flt: GameFilter) -> list[dict]:
         params,
     ).fetchall()
 
-    records = [_row_to_record(r, "time_class") for r in rows]
+    records = [_row_to_record(r, "time_class", bool(flt.player)) for r in rows]
     order = {tc: i for i, tc in enumerate(TIME_CLASSES)}
     records.sort(key=lambda r: (order.get(r["time_class"], 99), -r["games"]))
     return records
@@ -117,7 +128,7 @@ def by_time_control_detail(conn: sqlite3.Connection, flt: GameFilter) -> list[di
 
     out = []
     for r in rows:
-        rec = _row_to_record(r, "time_class")
+        rec = _row_to_record(r, "time_class", bool(flt.player))
         base, inc = r["base_seconds"], r["increment_seconds"]
         if base is None:
             rec["clock"] = "unknown"
@@ -222,7 +233,7 @@ def by_opening(
 
     out = []
     for r in rows:
-        rec = _row_to_record(r, "opening")
+        rec = _row_to_record(r, "opening", bool(flt.player))
         rec["last_played"] = r["last_played"]
         out.append(rec)
     return out

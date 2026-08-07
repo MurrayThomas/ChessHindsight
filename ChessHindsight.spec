@@ -1,11 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller build spec for HindsightChess.
+"""PyInstaller build spec for ChessHindsight.
 
-Produces a single HindsightChess.exe. The web/ folder is bundled inside it;
+Produces a single ChessHindsight.exe. The web/ folder is bundled inside it;
 data/ (database + settings) and stockfish/ stay *outside*, next to the exe,
 so they persist across runs and across rebuilds.
 
-Build with:  build.bat      (or: pyinstaller HindsightChess.spec --noconfirm)
+Build with:  build.bat      (or: pyinstaller ChessHindsight.spec --noconfirm)
 """
 
 hiddenimports = [
@@ -65,7 +65,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="HindsightChess",
+    name="ChessHindsight",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -78,4 +78,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon="assets/icon.ico",
+    # Names the exe as ChessHindsight in Explorer's Details tab and Task
+    # Manager; without a version resource both fall back to the bare filename.
+    version="assets/version_info.txt",
 )
