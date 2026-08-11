@@ -2646,6 +2646,55 @@ function init() {
     toast('Token saved');
   });
 
+  /*
+   * The About panel. Every value comes from the backend rather than being
+   * written into the page, so the version shown is the version running — a
+   * hardcoded one drifts the first time it is bumped and then quietly
+   * misreports itself in exactly the bug report it exists to help.
+   */
+  async function renderAbout() {
+    const host = $('#about-body');
+    if (!host) return;
+    let a;
+    try {
+      a = await api('about');
+    } catch {
+      host.replaceChildren(el('p', 'muted', 'Could not read version information.'));
+      return;
+    }
+
+    const rows = [
+      ['Version', a.version + (a.packaged ? '' : ' (from source)')],
+      ['Created by', a.author],
+      ['Licence', a.licence],
+      ['Python', a.python],
+      ['Engine', a.engine_available ? a.engine_path : 'not found — set one under Engine'],
+      ['Database', a.db_path],
+      ['Log file', a.log_path],
+    ];
+
+    const dl = el('dl', 'about-grid');
+    rows.forEach(([term, value]) => {
+      dl.append(el('dt', '', term));
+      // Paths are long and have no spaces to wrap on, so they get the mono
+      // treatment and are allowed to break anywhere rather than widening the
+      // panel past the window.
+      const isPath = term === 'Database' || term === 'Log file' || term === 'Engine';
+      dl.append(el('dd', isPath ? 'path' : '', value));
+    });
+
+    const link = el('a', '', a.url);
+    link.href = a.url;
+    link.target = '_blank';
+    link.rel = 'noreferrer noopener';
+
+    host.replaceChildren(
+      dl,
+      el('p', 'hint', `${a.copyright}. Free software under the GNU GPL, version 3 or later.`),
+      link,
+    );
+  }
+
   // Startup order matters: the installed piece sets have to be known before the
   // saved preference can be applied, or a valid choice looks unavailable and
   // silently falls back to the wrong set.
@@ -2656,6 +2705,10 @@ function init() {
       // Leaves the built-in Classic set, which is enough to draw a board.
     }
     renderPiecePicker();
+    // Not awaited: About is reference material at the bottom of Settings, and
+    // nothing else waits on it. Letting it block startup would put a network
+    // round-trip in front of the first screen for no benefit.
+    renderAbout();
 
     try {
       const cfg = await api('get_config');

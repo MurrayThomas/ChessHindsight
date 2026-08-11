@@ -240,6 +240,28 @@
 :root[data-board="ink"]      { --light-sq: #cfd4da; --dark-sq: #4d5560; }
 :root[data-board="contrast"] { --light-sq: #ffffff; --dark-sq: #4a4a4a; }
 
+/* About panel: a term/value grid that collapses to stacked rows when the
+   window is too narrow for two columns. */
+.about-grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 18px;
+  margin: 0 0 12px;
+}
+.about-grid dt { color: var(--muted); }
+.about-grid dd { margin: 0; min-width: 0; }
+/* Paths have no spaces to wrap on, so they must be allowed to break anywhere
+   or they push the panel wider than the window. */
+.about-grid dd.path {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 560px) {
+  .about-grid { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .about-grid dd { margin-bottom: 8px; }
+}
+
 :root {
   --radius: 8px;
   --mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;

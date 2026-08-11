@@ -51,6 +51,34 @@ class Api:
     def _filter(data: dict | None) -> GameFilter:
         return GameFilter.from_dict(data)
 
+    def about(self) -> dict:
+        """Who wrote this, which build it is, and where its data lives.
+
+        Reported rather than written into the page so the version can never
+        drift from the package's own. The Python and engine lines are here
+        because the first question about any bug report is which build it came
+        from — and the packaged app has no console to ask.
+        """
+        import sys
+
+        from . import __author__, __copyright__, __licence__, __version__
+
+        engine_path = engine.resolve_engine_path(self.config)
+        return {
+            "name": "ChessHindsight",
+            "version": __version__,
+            "author": __author__,
+            "copyright": __copyright__,
+            "licence": __licence__,
+            "url": "https://github.com/MurrayThomas/ChessHindsight",
+            "python": sys.version.split()[0],
+            "packaged": bool(getattr(sys, "frozen", False)),
+            "db_path": str(self.db_path),
+            "log_path": str(diagnostics.log_path()),
+            "engine_path": engine_path,
+            "engine_available": bool(engine_path and Path(engine_path).exists()),
+        }
+
     def ping(self) -> dict:
         """Frontend heartbeat. Silence here is what the watchdog reacts to."""
         diagnostics.watchdog().ping()
