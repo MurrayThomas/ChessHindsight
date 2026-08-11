@@ -13,7 +13,9 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from . import diagnostics, engine, favourites, library, stats, swings, sync, tree
+from . import (
+    diagnostics, engine, favourites, library, manual, stats, swings, sync, tree,
+)
 from .config import Config, DB_PATH
 from .db import connect, init_db
 from .ingest import reindex_positions
@@ -454,6 +456,37 @@ class Api:
         data.pop("moves_san", None)
         data["moves"] = tree.move_list(row["moves_san"])
         return data
+
+    # -- games entered by hand -------------------------------------------
+
+    def parse_moves(self, text: str | None = None) -> dict:
+        """Read typed notation, for the live preview while it is being written."""
+        return manual.parse_moves(text)
+
+    def add_manual_game(
+        self,
+        moves: str,
+        white: str,
+        black: str,
+        result: str,
+        played_at: str | None = None,
+        time_class: str | None = None,
+        event: str | None = None,
+        white_elo: int | None = None,
+        black_elo: int | None = None,
+        source: str = manual.DEFAULT_SOURCE,
+        favourite_name: str | None = None,
+    ) -> dict:
+        """Store a game typed from a scoresheet, optionally starring it."""
+        saved = manual.save_game(
+            self.conn, self.config, moves, white, black, result,
+            played_at=played_at, time_class=time_class, event=event,
+            white_elo=white_elo, black_elo=black_elo, source=source,
+        )
+        if favourite_name is not None:
+            fav = favourites.add(self.conn, saved["game_id"], favourite_name)
+            saved["favourite"] = fav["name"]
+        return saved
 
     # -- favourites ------------------------------------------------------
 

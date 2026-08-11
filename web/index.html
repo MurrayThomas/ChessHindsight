@@ -21,6 +21,7 @@
     <button class="nav-item" data-view="openings"><span>&#9814;</span>Openings</button>
     <button class="nav-item" data-view="games"><span>&#9776;</span>Games</button>
     <button class="nav-item" data-view="favourites"><span>&#9733;</span>Favourites</button>
+    <button class="nav-item" data-view="addgame"><span>&#9998;</span>Add&nbsp;game</button>
     <button class="nav-item" data-view="settings"><span>&#9881;</span>Settings</button>
     <div class="sidebar-foot">
       <div id="db-badge" class="badge">—</div>
@@ -83,11 +84,10 @@
 
       <div class="filter-row extra hidden" id="extra-filters">
         <label class="f"><span>Source</span>
+          <!-- Filled from the sources actually in the database, so a source
+               only appears once there is something to filter to. -->
           <select id="f-source">
             <option value="">Any</option>
-            <option value="chesscom">Chess.com</option>
-            <option value="lichess">Lichess</option>
-            <option value="pgn">PGN import</option>
           </select>
         </label>
         <label class="f"><span>Rated</span>
@@ -362,6 +362,79 @@
     </section>
 
     <!-- ---------- Settings ---------- -->
+    <!--
+      Typing a game in from a scoresheet. The notation box and the board are two
+      views of one move list: the box is where a game is transcribed, the board
+      is how a misread move is caught. Whichever is touched, the other follows.
+    -->
+    <section class="view" id="view-addgame">
+      <div class="addgame-layout">
+        <div class="panel">
+          <h2>Moves</h2>
+          <p class="hint">
+            Type or paste the game. Move numbers are optional, and comments,
+            variations and a trailing result are ignored &mdash; so a PGN pasted
+            straight in works too. You can also just play the moves on the board.
+          </p>
+          <textarea id="ag-moves" rows="9" spellcheck="false"
+                    placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6"></textarea>
+          <div id="ag-status" class="ag-status muted">No moves yet.</div>
+          <div class="row">
+            <button id="ag-takeback" class="ghost" title="Remove the last move">Take back</button>
+            <button id="ag-clear" class="ghost">Clear</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Position</h2>
+          <div id="ag-board-host"></div>
+        </div>
+
+        <div class="panel">
+          <h2>Details</h2>
+          <div class="ag-fields">
+            <label class="f"><span>White</span><input id="ag-white" placeholder="Who had White"></label>
+            <label class="f"><span>Black</span><input id="ag-black" placeholder="Who had Black"></label>
+            <label class="f"><span>Date</span><input id="ag-date" type="date"></label>
+            <label class="f"><span>Result</span>
+              <select id="ag-result">
+                <option value="">&mdash;</option>
+                <option value="1-0">1-0 &middot; White won</option>
+                <option value="0-1">0-1 &middot; Black won</option>
+                <option value="1/2-1/2">&frac12;-&frac12; &middot; Draw</option>
+              </select>
+            </label>
+            <!-- The same dimension the filter bar calls Source, so what is
+                 chosen here is what it can later be filtered to. -->
+            <label class="f"><span>Kind</span>
+              <select id="ag-source">
+                <option value="otb">Over the board</option>
+                <option value="pgn">PGN / from elsewhere</option>
+              </select>
+            </label>
+            <label class="f"><span>Time control</span>
+              <select id="ag-timeclass">
+                <option value="">Not recorded</option>
+                <option value="classical">Classical</option>
+                <option value="rapid">Rapid</option>
+                <option value="blitz">Blitz</option>
+                <option value="bullet">Bullet</option>
+              </select>
+            </label>
+            <label class="f"><span>Event</span><input id="ag-event" placeholder="Kitchen table, club night&hellip;"></label>
+          </div>
+          <label class="toggle ag-fav">
+            <input id="ag-fav" type="checkbox"><span>Save as a favourite</span>
+          </label>
+          <input id="ag-fav-name" class="hidden" placeholder="What to call it — blank uses the players and date">
+          <div class="row">
+            <button id="ag-save" class="primary">Save game</button>
+            <span id="ag-save-msg" class="muted"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="view" id="view-settings">
       <div class="panel">
         <h2>Appearance</h2>

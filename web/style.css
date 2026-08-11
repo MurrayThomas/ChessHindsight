@@ -240,6 +240,53 @@
 :root[data-board="ink"]      { --light-sq: #cfd4da; --dark-sq: #4d5560; }
 :root[data-board="contrast"] { --light-sq: #ffffff; --dark-sq: #4a4a4a; }
 
+/* Add-game view: notation, board and details side by side, because
+   transcribing means looking at all three at once. Collapses to one column
+   before the board would be squeezed too small to read. */
+.addgame-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.1fr) minmax(260px, 0.9fr);
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1180px) {
+  .addgame-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 780px) {
+  .addgame-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+#ag-moves {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* The status line is read constantly while typing, so it states its verdict in
+   colour as well as words — but keeps a neutral weight, since a red line for
+   every half-finished move would be exhausting rather than informative. */
+.ag-status {
+  margin: 8px 0;
+  min-height: 1.3em;
+  font-size: 0.92rem;
+}
+.ag-status.good { color: var(--win); }
+.ag-status.bad  { color: var(--loss); }
+
+.ag-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ag-fields .f { display: flex; flex-direction: column; gap: 4px; }
+.ag-fields .f span { color: var(--muted); font-size: 0.85rem; }
+.ag-fields input, .ag-fields select { width: 100%; }
+.ag-fav { margin-bottom: 10px; }
+#ag-fav-name { width: 100%; margin-bottom: 10px; }
+
 /* About panel: a term/value grid that collapses to stacked rows when the
    window is too narrow for two columns. */
 .about-grid {

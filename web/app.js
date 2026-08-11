@@ -540,6 +540,56 @@ async function loadVariants() {
   sel.closest('.f').classList.toggle('hidden', !others.length);
 }
 
+/* What each stored source is called on screen. The stored value is a short key
+ * that never changes, because it is written into every row; the label is free
+ * to read however it should. Anything not listed falls back to its own key, so
+ * a source added later is still selectable before it is named here. */
+const SOURCE_LABELS = {
+  chesscom: 'Chess.com',
+  lichess: 'Lichess',
+  pgn: 'PGN import',
+  otb: 'Over the board',
+};
+
+/*
+ * Fill the source dropdown from what the database actually holds.
+ *
+ * Hardcoding the list meant a game entered by hand had no way to be filtered
+ * to, and it also offered Chess.com to somebody who has never synced it. Built
+ * from the counts instead, an over-the-board game becomes filterable the moment
+ * the first one is saved — everywhere the filter bar reaches, including
+ * head-to-head.
+ */
+async function loadSources() {
+  const sel = $('#f-source');
+  if (!sel) return;
+  let sources = [];
+  try {
+    sources = (await api('summary')).by_source || [];
+  } catch {
+    // Leave whatever is there; Any still means any.
+    return;
+  }
+  const keep = sel.value;
+  sel.innerHTML = '';
+  const add = (value, text) => {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = text;
+    sel.appendChild(opt);
+  };
+  add('', 'Any');
+  for (const s of sources) {
+    add(s.source, `${SOURCE_LABELS[s.source] || s.source} (${s.games.toLocaleString()})`);
+  }
+  // A filter pointing at a source that no longer has games would silently match
+  // nothing, so fall back to Any rather than leave it stranded.
+  sel.value = keep;
+  if (sel.selectedIndex < 0) sel.value = '';
+  // One source is not a choice.
+  sel.closest('.f').classList.toggle('hidden', sources.length < 2);
+}
+
 /** Is the filtered variant one the position index covers? */
 function variantIsIndexed() {
   const key = $('#f-variant') ? $('#f-variant').value : '';
@@ -2332,6 +2382,7 @@ const LOADERS = {
   openings: loadOpenings,
   games: loadGames,
   favourites: loadFavourites,
+  addgame: loadAddGame,
   settings: loadSettings,
 };
 
@@ -2342,6 +2393,190 @@ function activeBoard() {
     return positionsBoard;
   }
   return null;
+}
+
+/* ---------------- add a game by hand ---------------- */
+
+/*
+ * The notation box and the board show one move list from two directions, and
+ * keeping them in step is the whole trick of this view.
+ *
+ * The text is the record: it is what gets saved, and it is what the person
+ * transcribing is looking at. So typing drives the board, and a move played on
+ * the board is written back into the text as notation. `agSyncing` breaks the
+ * loop that would otherwise form — setting the box fires the board's onChange,
+ * which would set the box again.
+ */
+let addGameBoard = null;
+let agSyncing = false;
+let agParsed = { ok: true, moves: [], count: 0 };
+
+function ensureAddGameBoard() {
+  if (!addGameBoard) {
+    addGameBoard = createAnalysisBoard({
+      host: $('#ag-board-host'),
+      // No database questions here: this board is for checking a position as it
+      // is entered, not for asking what was played from it.
+      getFilter: () => ({ player: '' }),
+      onChange: (data) => {
+        if (agSyncing) return;
+        // Only a move *added* on the board is written back. The board's
+        // controls also step backwards through the line, and that changes what
+        // is being displayed rather than what the game is — rewriting the box
+        // from a rewound board would silently delete the rest of the game.
+        // Exactly one more move than the text holds, because a click plays
+        // exactly one. Anything else is the board getting ahead of the game:
+        // the analysis board keeps the engine's suggested line in its history
+        // as future moves, so jumping to the end can leap several plies at
+        // once — and writing those back would transcribe Stockfish's idea into
+        // the scoresheet as though it had been played.
+        const moves = data.moves || [];
+        if (moves.length !== agParsed.count + 1) return;
+        $('#ag-moves').value = data.san_line || '';
+        applyAgMoves();
+      },
+    });
+    // Transcribing is not analysing. Auto-evaluation would spend a search on
+    // every keystroke, and — because the board keeps the engine's line in its
+    // history as moves still to come — it is also what puts moves on the board
+    // that nobody played. The game can be analysed on the Explorer once saved.
+    const auto = $('#ag-board-host .autoeval');
+    if (auto && auto.checked) {
+      auto.checked = false;
+      auto.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+  return addGameBoard;
+}
+
+/** Parse what is typed, tell the writer where they are, and move the board. */
+const applyAgMoves = debounce(async () => {
+  const text = $('#ag-moves').value;
+  let p;
+  try {
+    p = await api('parse_moves', { text });
+  } catch (e) {
+    return;
+  }
+  agParsed = p;
+  renderAgStatus(p);
+
+  const board = ensureAddGameBoard();
+  agSyncing = true;
+  try {
+    await board.setLine(p.moves.map((m) => ({ uci: m.uci, san: m.san })));
+  } finally {
+    agSyncing = false;
+  }
+
+  // A finished game knows its own result; offer it rather than make them pick.
+  const sel = $('#ag-result');
+  if (p.suggested_result && !sel.value) sel.value = p.suggested_result;
+  else if (p.result && !sel.value) sel.value = p.result;
+}, 250);
+
+function renderAgStatus(p) {
+  const box = $('#ag-status');
+  if (!p.count && p.ok) {
+    box.className = 'ag-status muted';
+    box.textContent = 'No moves yet.';
+    return;
+  }
+  if (!p.ok) {
+    box.className = 'ag-status bad';
+    // The moves before the bad one are still shown on the board, so say how far
+    // it got — that is where to start re-reading the scoresheet.
+    box.textContent = `${p.error}  ${p.count} move${p.count === 1 ? '' : 's'} read before it.`;
+    return;
+  }
+  const moveNo = Math.floor(p.count / 2) + (p.count % 2 ? 1 : 0);
+  box.className = 'ag-status good';
+  box.textContent = p.is_game_over
+    ? `${p.count} moves — the game is over on the board.`
+    : `${p.count} moves, through move ${moveNo}. ${p.turn === 'white' ? 'White' : 'Black'} to play.`;
+}
+
+function refreshAgStatus() { applyAgMoves(); }
+
+async function loadAddGame() {
+  const board = ensureAddGameBoard();
+  // Draw the starting position on first arrival. Without this the frame sits
+  // empty until the first move is typed, which reads as the board being broken
+  // rather than waiting.
+  if (!board.data) {
+    agSyncing = true;
+    try { await board.setPosition(null); } finally { agSyncing = false; }
+  }
+  if (!$('#ag-date').value) {
+    const d = new Date(); const pad = (n) => String(n).padStart(2, '0');
+    $('#ag-date').value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+  // Pre-fill whichever side is yours, since one of the two names is always the
+  // same person and typing it every game is the sort of friction that stops a
+  // record being kept at all.
+  const me = (state.config && state.config.me && state.config.me[0]) || '';
+  if (me && !$('#ag-white').value && !$('#ag-black').value) $('#ag-white').value = me;
+}
+
+function resetAddGame() {
+  $('#ag-moves').value = '';
+  $('#ag-result').value = '';
+  $('#ag-event').value = '';
+  $('#ag-fav').checked = false;
+  $('#ag-fav-name').value = '';
+  $('#ag-fav-name').classList.add('hidden');
+  agParsed = { ok: true, moves: [], count: 0 };
+  renderAgStatus(agParsed);
+  agSyncing = true;
+  Promise.resolve(ensureAddGameBoard().setPosition(null)).finally(() => { agSyncing = false; });
+}
+
+async function saveAddGame() {
+  const msg = $('#ag-save-msg');
+  const btn = $('#ag-save');
+  if (!agParsed.ok) return toast('Fix the notation first — ' + agParsed.error, true);
+  if (!agParsed.count) return toast('Enter some moves first', true);
+  if (!$('#ag-white').value.trim() || !$('#ag-black').value.trim()) {
+    return toast('Both players need a name', true);
+  }
+  if (!$('#ag-result').value) return toast('Pick a result', true);
+
+  btn.disabled = true;
+  msg.textContent = 'Saving…';
+  try {
+    const saved = await api('add_manual_game', {
+      moves: $('#ag-moves').value,
+      white: $('#ag-white').value.trim(),
+      black: $('#ag-black').value.trim(),
+      result: $('#ag-result').value,
+      played_at: $('#ag-date').value || null,
+      time_class: $('#ag-timeclass').value || null,
+      event: $('#ag-event').value.trim() || null,
+      source: $('#ag-source').value,
+      favourite_name: $('#ag-fav').checked ? $('#ag-fav-name').value.trim() : null,
+    });
+    toast(`Saved: ${saved.white} vs ${saved.black}, ${saved.moves} moves`);
+    msg.textContent = '';
+    // The players stay — the next game is usually the rematch — but the moves
+    // and result must not, or the same game gets saved twice.
+    resetAddGame();
+    // The badge in the sidebar is the confirmation that it landed.
+    try {
+      const s = await api('summary');
+      $('#db-badge').textContent =
+        `${s.games.toLocaleString()} games\n${s.accounts.length} account(s)`;
+    } catch { /* the count is decoration; a stale one is not worth an error */ }
+    // The very first game entered by hand creates the "Over the board" source.
+    // Without rebuilding the dropdown it would not be filterable until the app
+    // was restarted — which is exactly when someone would go looking for it.
+    loadSources();
+    loadPlayersDatalist();
+  } catch (e) {
+    msg.textContent = '';
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function switchView(name) {
@@ -2638,6 +2873,24 @@ function init() {
     }
   });
 
+  // -- add a game by hand --
+  $('#ag-moves').addEventListener('input', applyAgMoves);
+  $('#ag-clear').addEventListener('click', resetAddGame);
+  $('#ag-takeback').addEventListener('click', () => {
+    // Dropping the last move from the text rather than from the board keeps the
+    // text authoritative, which is the rule the whole view runs on.
+    if (!agParsed.count) return;
+    const kept = agParsed.moves.slice(0, -1);
+    $('#ag-moves').value = kept
+      .map((m, i) => (i % 2 === 0 ? `${i / 2 + 1}.${m.san}` : m.san)).join(' ');
+    applyAgMoves();
+  });
+  $('#ag-fav').addEventListener('change', (e) => {
+    $('#ag-fav-name').classList.toggle('hidden', !e.target.checked);
+    if (e.target.checked) $('#ag-fav-name').focus();
+  });
+  $('#ag-save').addEventListener('click', saveAddGame);
+
   $('#token-save').addEventListener('click', async () => {
     const token = $('#lichess-token').value.trim();
     if (!token) return toast('Enter a token first', true);
@@ -2732,6 +2985,7 @@ function init() {
       if (state.me.length && !$('#f-player').value) $('#f-player').value = state.me[0];
       loadPlayersDatalist();
       loadVariants();
+      loadSources();
     } catch (e) {
       toast(e.message, true);
     }
