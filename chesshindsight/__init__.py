@@ -9,4 +9,4 @@
 __author__ = "Thomas Murray"
 __copyright__ = "Copyright (C) 2026 Thomas Murray"
 __licence__ = "GPL-3.0-or-later"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
