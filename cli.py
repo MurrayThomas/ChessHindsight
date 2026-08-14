@@ -126,6 +126,14 @@ def cmd_h2h(args, conn, config) -> int:
     _print_records(data["by_time_control"], "time_class", "TIME CONTROL")
     print("\nBy exact clock:")
     _print_records(data["by_clock"], "clock", "CLOCK")
+    print(f"\nBy opening (colour is {args.player}'s):")
+    _print_records(
+        [
+            {**r, "label": f"{r['opening']} ({r['color']})"}
+            for r in data["by_opening"][:15]
+        ],
+        "label", "OPENING",
+    )
     return 0
 
 

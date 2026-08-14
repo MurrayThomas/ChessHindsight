@@ -717,20 +717,26 @@ function playedCase(top) {
  * you" read as though *you* were White — the parenthetical attached to the
  * wrong noun. Which colour is moving is on the board anyway; whose move it was
  * is the thing this has to get across, so it says only that.
+ *
+ * `opp` is the one opponent the filter is narrowed to, when there is one. With
+ * a single opponent "your opponents" is a plural for a set of one, and the
+ * whole point of studying one person is that the move is *his* — so he gets
+ * named. Without an opponent filter the plural is correct and stays.
  */
-function playedByLabel(top, data, who, noneLabel) {
+function playedByLabel(top, data, who, noneLabel, opp) {
   const you = who || 'you';
   const poss = who ? `${who}’s` : 'your';
+  const them = opp || `${poss} opponents`;
   switch (playedCase(top)) {
     case 'none':    return noneLabel || 'Most played here';
-    case 'against': return `What ${poss} opponents played most here`;
+    case 'against': return `What ${them} played most here`;
     case 'own':     return `What ${you} played most often here`;
-    default:        return `Most played here — partly ${poss}, partly their opponents’`;
+    default:        return `Most played here — partly ${poss}, partly ${opp ? opp + '’s' : 'their opponents’'}`;
   }
 }
 
 /** The same fact as a full sentence, for the arrow's tooltip. */
-function playedByTitle(top, data, who) {
+function playedByTitle(top, data, who, opp) {
   const total = top.games;
   const mine = top.by_player;
   const side = data.turn === 'white' ? 'White' : 'Black';
@@ -742,12 +748,12 @@ function playedByTitle(top, data, who) {
       return `${top.san} was played here ${total} time(s)`;
     case 'against':
       return `${top.san} was played against ${at} here ${total} time(s) — it is `
-        + `${side} to move and ${at} had ${other}, so none of them were theirs`;
+        + `${side} to move and ${at} had ${other}, so ${opp ? `all of them were ${opp}’s` : 'none of them were theirs'}`;
     case 'own':
       return `${you} played ${top.san} here ${total} time(s), with ${side}`;
     default:
       return `${top.san} was played here ${total} time(s): ${mine} by ${you} `
-        + `with ${side}, ${total - mine} against ${at}`;
+        + `with ${side}, ${total - mine} ${opp ? `by ${opp}` : `against ${at}`}`;
   }
 }
 
@@ -758,11 +764,11 @@ function playedByTitle(top, data, who) {
  * own row rather than given a row of its own — three legend entries for two
  * arrows on the board is what made the guide look wrong.
  */
-function playedAgreeNote(top, who) {
+function playedAgreeNote(top, who, opp) {
   const poss = who ? `${who}’s` : 'your';
   switch (playedCase(top)) {
     case 'none':    return 'also the most played here';
-    case 'against': return `also what ${poss} opponents played most here`;
+    case 'against': return `also what ${opp || `${poss} opponents`} played most here`;
     case 'own':     return `also ${poss} most played here`;
     default:        return 'also the most played here';
   }
@@ -800,12 +806,15 @@ function renderTreePanel(data, board, els) {
    * side of the board.
    */
   const top = data.children && data.children[0];
+  // Narrowed to one opponent, the arrow is describing that person, so it names
+  // them. Studying one rival's habits is the case this exists for.
+  const vs = state.filter.opponent || null;
   board.setPlayedMove(top ? {
     uci: top.uci,
     san: top.san,
-    label: playedByTitle(top, data, null),
-    guideLabel: playedByLabel(top, data, null),
-    agreeLabel: playedAgreeNote(top, null),
+    label: playedByTitle(top, data, null, vs),
+    guideLabel: playedByLabel(top, data, null, null, vs),
+    agreeLabel: playedAgreeNote(top, null, vs),
   } : null, 'mine');
 
   els.tree.innerHTML = '';
@@ -1306,10 +1315,13 @@ async function loadH2H() {
     return;
   }
 
+  // Player and opponent come from this view's own two boxes, so the filter
+  // bar's copies are dropped. Colour is kept: it narrows to the games the
+  // player had that side, which is how you ask "what does he play against my
+  // Black?" — and the openings, the record and the position tree all answer it.
   const base = readFilter();
   delete base.player;
   delete base.opponent;
-  delete base.color;
 
   let data;
   try {
@@ -1320,6 +1332,16 @@ async function loadH2H() {
   }
 
   const t = data.total;
+
+  /* A colour filter halves everything below it. Say so once, at the top, rather
+   * than let a partial record be read as the whole rivalry. */
+  if (data.color) {
+    const side = data.color === 'white' ? 'White' : 'Black';
+    const note = el('p', 'muted',
+      `Only the games where ${player} had ${side}. Clear the Colour filter for the full record.`);
+    out.appendChild(note);
+  }
+
   const cards = el('div', 'cards');
   const mkCard = (k, v, s) => {
     const c = el('div', 'card');
@@ -1367,6 +1389,39 @@ async function loadH2H() {
     { empty: '—' },
   ));
   out.appendChild(p2);
+
+  /* Openings, split by which side the player had. Between two named people the
+   * split is the point: one row saying "Sicilian, 6 games" would hide that four
+   * of them were the opponent's choice and two were the player's. */
+  const p4 = el('div', 'panel');
+  p4.appendChild(el('h2', null, 'By opening'));
+  const openings = data.by_opening || [];
+  const p4wrap = el('div', 'scroll-y');
+  p4wrap.appendChild(buildTable(
+    [
+      { label: 'Opening', key: 'opening' },
+      // Dropped when a colour is filtered: every row would say the same thing,
+      // and the note at the top of the view already says which side it is.
+      ...(data.color ? [] : [{
+        label: 'Colour',
+        help: `Which side ${player} had`,
+        render: (r) => (r.color ? r.color[0].toUpperCase() + r.color.slice(1) : '—'),
+      }]),
+      ...recordColumns(),
+      { label: 'Last played', render: (r) => fmtDate(r.last_played) },
+    ],
+    openings,
+    { empty: 'No games between these two players.' },
+  ));
+  p4.appendChild(p4wrap);
+  // The list is capped, so the column can add up to less than the total. Say so
+  // rather than let someone total it and wonder where their games went.
+  const shown = openings.reduce((n, r) => n + r.games, 0);
+  if (shown < t.games) {
+    p4.appendChild(el('p', 'muted',
+      `Most-played lines only — ${t.games - shown} further game(s) in rarer openings.`));
+  }
+  out.appendChild(p4);
 
   const p3 = el('div', 'panel');
   p3.appendChild(el('h2', null, `Games (${data.games.length})`));

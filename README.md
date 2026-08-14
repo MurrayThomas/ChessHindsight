@@ -200,8 +200,8 @@ so importing a PGN of games you already synced won't create duplicates.
 | **Dashboard** | Overall record, split by time control; most-played opponents |
 | **Explorer** | Move-by-move opening tree from any position, with your score per move |
 | **Positions** | The positions you reach most often — sort by frequency or by worst score |
-| **Head-to-head** | You vs one specific player: games, win rates, per-time-control splits |
-| **Openings** | Performance grouped by ECO code |
+| **Head-to-head** | You vs one specific player: games, win rates, per-time-control splits, and the openings between you split by which side you had |
+| **Openings** | Performance grouped by opening name (not ECO code — several codes share one name and several names share one code) |
 | **Games** | Every game matching the filter, paginated |
 
 The filter bar at the top applies to every view: player, colour, opponent, time

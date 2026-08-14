@@ -70,7 +70,9 @@ def overview(conn: sqlite3.Connection, flt: GameFilter) -> dict:
     result["first_game"] = row["first_game"]
     result["last_game"] = row["last_game"]
 
-    if flt.player:
+    # No colour split when the filter already fixes one: the other side would be
+    # a row of zeros, which reads as a record rather than as "not asked for".
+    if flt.player and not flt.color:
         colors = {}
         for color in ("white", "black"):
             sub = GameFilter(**{**flt.to_dict(), "color": color})
@@ -147,18 +149,30 @@ def by_time_control_detail(conn: sqlite3.Connection, flt: GameFilter) -> list[di
 def head_to_head(
     conn: sqlite3.Connection, player: str, opponent: str, base: GameFilter | None = None
 ) -> dict:
-    """Full head-to-head record between two players, split by time control."""
+    """Full head-to-head record between two players, split by time control.
+
+    A colour in the filter is honoured and narrows to the games the player had
+    that side. It narrows the *games*, not the moves: in a set of games where
+    the player had Black, White's moves are the opponent's, and those are
+    exactly what the position tree and its arrow are for.
+    """
     base = base or GameFilter()
     flt = GameFilter(
-        **{**base.to_dict(), "player": player, "opponent": opponent, "color": None}
+        **{**base.to_dict(), "player": player, "opponent": opponent}
     ).normalized()
 
     result = {
         "player": player,
         "opponent": opponent,
+        # Echoed back so the view can say which side it is reporting on rather
+        # than leaving a halved record looking like the whole story.
+        "color": flt.color,
         "total": overview(conn, flt),
         "by_time_control": by_time_control(conn, flt),
         "by_clock": by_time_control_detail(conn, flt),
+        # Split by colour: against one particular person, which side opened the
+        # game is what makes an opening actionable. See by_opening.
+        "by_opening": by_opening(conn, flt, limit=40, split_color=True),
         "games": recent_games(conn, flt, limit=200),
     }
     return result
@@ -204,7 +218,10 @@ def opponents(
 
 
 def by_opening(
-    conn: sqlite3.Connection, flt: GameFilter, limit: int = 40
+    conn: sqlite3.Connection,
+    flt: GameFilter,
+    limit: int = 40,
+    split_color: bool = False,
 ) -> list[dict]:
     """Performance grouped by opening name.
 
@@ -213,6 +230,13 @@ def by_opening(
     does not line up with the names one-to-one — "Modern Defense" appears under
     both A40 and B06, while B20 covers several different Sicilians — so it could
     only ever sit beside the name without explaining anything about it.
+
+    `split_color` groups by the player's colour as well, giving one row per
+    opening per side. Across a whole database that is noise, but between two
+    named players it is the whole point: "the Sicilian, 6 games, 2-3-1" hides
+    that four of them were the opponent's Sicilian and two were the player's.
+    Those are different openings to prepare for. It needs a player in focus to
+    have a colour to report, so without one it is ignored rather than guessed at.
     """
     flt = flt.normalized()
     where, params = flt.where("g")
@@ -220,12 +244,18 @@ def by_opening(
     params["limit"] = limit
     win, loss, draw = player_wld_exprs("g")
 
+    split = split_color and bool(flt.player)
+    color_expr = "CASE WHEN g.white_lower = :player THEN 'white' ELSE 'black' END"
+    select_color = f"{color_expr} color," if split else ""
+    group_color = f", {color_expr}" if split else ""
+
     rows = conn.execute(
         f"""SELECT COALESCE(g.opening, 'Unknown opening') opening,
+                   {select_color}
                    COUNT(*) games, {win} wins, {loss} losses, {draw} draws,
                    MAX(g.played_at) last_played
             FROM games g WHERE {where}
-            GROUP BY COALESCE(g.opening, 'Unknown opening')
+            GROUP BY COALESCE(g.opening, 'Unknown opening'){group_color}
             ORDER BY games DESC
             LIMIT :limit""",
         params,
@@ -235,6 +265,8 @@ def by_opening(
     for r in rows:
         rec = _row_to_record(r, "opening", bool(flt.player))
         rec["last_played"] = r["last_played"]
+        if split:
+            rec["color"] = r["color"]
         out.append(rec)
     return out
 

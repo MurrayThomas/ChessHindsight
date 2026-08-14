@@ -62,7 +62,8 @@ window.eval(
 );
 
 const $ = (s) => window.document.querySelector(s);
-const $$ = (s) => Array.from(window.document.querySelectorAll(s));
+// An optional root, for asking about one panel rather than the whole page.
+const $$ = (s, root) => Array.from((root || window.document).querySelectorAll(s));
 const click = (elm) => elm.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 const key = (k) => window.document.dispatchEvent(
   new window.KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
@@ -1165,6 +1166,111 @@ ok('head-to-head still shows the W-L-D record',
 ok('no "half a point" prose left', !/half a point/.test($('#h2h-out').textContent));
 
 /* ---------------------------------------------------------------- */
+head('head-to-head reports the openings the two of them play');
+
+const h2hPanels = $$('#h2h-out .panel');
+const openPanel = h2hPanels.find((p) => {
+  const h = p.querySelector('h2');
+  return h && h.textContent.trim() === 'By opening';
+});
+ok('there is a By opening panel', !!openPanel,
+  JSON.stringify(h2hPanels.map((p) => p.querySelector('h2') && p.querySelector('h2').textContent)));
+
+const openHeads = openPanel ? $$('th', openPanel).map((t) => t.textContent.trim()) : [];
+ok('it names the opening', openHeads.includes('Opening'), JSON.stringify(openHeads));
+ok('and which side the player had', openHeads.includes('Colour'), JSON.stringify(openHeads));
+ok('with the same record columns as everywhere else',
+  ['Games', 'W', 'L', 'D', 'Win %'].every((h) => openHeads.includes(h)),
+  JSON.stringify(openHeads));
+
+const colourIdx = openHeads.indexOf('Colour');
+const openRows = openPanel ? $$('tbody tr', openPanel) : [];
+ok('it lists openings', openRows.length > 0, `${openRows.length} rows`);
+
+const colours = openRows.map((r) => r.children[colourIdx].textContent.trim());
+ok('every row says which side the player had',
+  colours.length > 0 && colours.every((c) => c === 'White' || c === 'Black'),
+  JSON.stringify([...new Set(colours)]));
+// The whole reason for splitting: one side's opening is not the other's.
+ok('and both sides are represented',
+  colours.includes('White') && colours.includes('Black'),
+  JSON.stringify([...new Set(colours)]));
+
+const nameIdx = openHeads.indexOf('Opening');
+const pairs = openRows.map((r) => r.children[nameIdx].textContent.trim() + '|' + r.children[colourIdx].textContent.trim());
+ok('one row per opening per colour, never a duplicate',
+  new Set(pairs).size === pairs.length,
+  `${pairs.length} rows, ${new Set(pairs).size} distinct`);
+
+/* ---------------------------------------------------------------- */
+head('filtering to one colour asks "what does he play against my Black?"');
+
+const postJson = (m, b) => fetch(BASE + '/api/' + m, {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b),
+}).then((r) => r.json());
+const bothColours = await postJson('head_to_head',
+  { player: 's1mplepie', opponent: 'Bitcoins-Gambit' });
+
+$('#f-color').value = 'black';
+click($('#h2h-go'));
+await idle(2500);
+
+const blackPanels = $$('#h2h-out .panel');
+const blackOpenPanel = blackPanels.find((p) => {
+  const h = p.querySelector('h2');
+  return h && h.textContent.trim() === 'By opening';
+});
+ok('the openings panel survives the colour filter', !!blackOpenPanel);
+
+const blackHeads = blackOpenPanel ? $$('th', blackOpenPanel).map((t) => t.textContent.trim()) : [];
+// Every row would say "Black", so the column is dropped and the note says it once.
+ok('the now-constant Colour column is dropped', !blackHeads.includes('Colour'),
+  JSON.stringify(blackHeads));
+ok('and the view says which side it is reporting',
+  /Only the games where s1mplepie had Black/.test($('#h2h-out').textContent));
+ok('the By colour split is gone, not left half empty',
+  !blackPanels.some((p) => {
+    const h = p.querySelector('h2');
+    return h && h.textContent.trim() === 'By colour';
+  }));
+
+// The real check: it is a strict subset, not the same numbers relabelled.
+const blackData = await postJson('head_to_head',
+  { player: 's1mplepie', opponent: 'Bitcoins-Gambit', filter: { color: 'black' } });
+ok('the colour is echoed back', blackData.color === 'black', String(blackData.color));
+ok('fewer games than the full rivalry',
+  blackData.total.games > 0 && blackData.total.games < bothColours.total.games,
+  `${blackData.total.games} of ${bothColours.total.games}`);
+ok('and only openings played as Black',
+  blackData.by_opening.every((r) => r.color === 'black'),
+  JSON.stringify([...new Set(blackData.by_opening.map((r) => r.color))]));
+
+/*
+ * The point of the whole exercise: narrowing to the games where you had Black
+ * must not narrow to *your moves*. In those games White's moves are his, and
+ * the blue arrow is what shows them.
+ */
+const blackTree = await postJson('explore', {
+  filter: { player: 's1mplepie', opponent: 'Bitcoins-Gambit', color: 'black' }, moves: [],
+});
+ok('the tree still reaches those games', blackTree.total_games > 0,
+  String(blackTree.total_games));
+ok('it is White to move at the start', blackTree.turn === 'white', blackTree.turn);
+ok('his openings are all still there to be arrowed',
+  blackTree.children.length > 0, `${blackTree.children.length} moves`);
+ok('and every one of them is credited to him, not to you',
+  blackTree.children.every((c) => c.by_player === 0),
+  blackTree.children.slice(0, 3).map((c) => `${c.san}:${c.by_player}`).join(' '));
+
+// Put the filter back so nothing downstream inherits it.
+$('#f-color').value = '';
+click($('#h2h-go'));
+await idle(2500);
+ok('clearing the filter restores the full record',
+  /By colour/.test($('#h2h-out').textContent)
+  && !/Only the games where/.test($('#h2h-out').textContent));
+
+/* ---------------------------------------------------------------- */
 head('backend no longer emits score_pct');
 const post = (m, b) => fetch(BASE + '/api/' + m, {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b),
@@ -1175,6 +1281,25 @@ ok('overview has no score_pct', !('score_pct' in ov), JSON.stringify(Object.keys
 ok('by_color entries dropped score_pct too',
   ov.by_color && !('score_pct' in ov.by_color.white) && 'win_pct' in ov.by_color.white,
   JSON.stringify(ov.by_color && ov.by_color.white));
+const h2hData = await post('head_to_head',
+  { player: 's1mplepie', opponent: 'Bitcoins-Gambit' });
+ok('head_to_head returns openings', Array.isArray(h2hData.by_opening) && h2hData.by_opening.length > 0,
+  JSON.stringify(Object.keys(h2hData)));
+ok('each carries the player\'s colour',
+  h2hData.by_opening.every((r) => r.color === 'white' || r.color === 'black'),
+  JSON.stringify(h2hData.by_opening[0]));
+ok('and a record measured from the player\'s side',
+  h2hData.by_opening.every((r) => r.wins + r.losses + r.draws === r.games),
+  JSON.stringify(h2hData.by_opening[0]));
+// The split must partition the games, not double-count them.
+ok('the opening rows never total more than the games played',
+  h2hData.by_opening.reduce((n, r) => n + r.games, 0) <= h2hData.total.games,
+  `${h2hData.by_opening.reduce((n, r) => n + r.games, 0)} vs ${h2hData.total.games}`);
+// The plain openings view is unchanged: no colour column has appeared there.
+const plainOpenings = await post('by_opening', { filter: { player: 's1mplepie' }, limit: 5 });
+ok('the Openings tab is still grouped by name alone',
+  plainOpenings.every((r) => !('color' in r)), JSON.stringify(plainOpenings[0]));
+
 const tr = await post('explore', { filter: { player: 's1mplepie' } });
 const kid = tr.children[0];
 ok('tree children use win_pct / white_win_pct',
@@ -1959,6 +2084,35 @@ ok('and the tooltip spells out why none of them were yours',
 ok('and gives the split in numbers when it is mixed',
   /5 by you with White/.test(ttl(mix9, turnWhite))
   && /4 against you/.test(ttl(mix9, turnWhite)), ttl(mix9, turnWhite));
+
+/*
+ * Narrowed to one opponent, "your opponents" is a plural for a set of one.
+ * Studying one rival is the case the arrow exists for, so it names him.
+ */
+const VS = 'Bitcoins-Gambit';
+ok('with one opponent filtered the arrow names him',
+  /What Bitcoins-Gambit played most here/.test(lbl(none9, turnWhite, null, null, VS)),
+  lbl(none9, turnWhite, null, null, VS));
+ok('and does not also call him "your opponents"',
+  !/your opponents/.test(lbl(none9, turnWhite, null, null, VS)),
+  lbl(none9, turnWhite, null, null, VS));
+ok('a move of your own is still yours, not his',
+  /What you played most often here/.test(lbl(mine9, turnWhite, null, null, VS)),
+  lbl(mine9, turnWhite, null, null, VS));
+ok('a mixed position credits him for his share',
+  /partly Bitcoins-Gambit’s/.test(lbl(mix9, turnWhite, null, null, VS)),
+  lbl(mix9, turnWhite, null, null, VS));
+ok('the tooltip says all of them were his',
+  /all of them were Bitcoins-Gambit’s/.test(ttl(none9, turnWhite, null, VS)),
+  ttl(none9, turnWhite, null, VS));
+ok('and never says "you’s opponents"',
+  ![lbl(none9, turnWhite, null, null, VS), lbl(mix9, turnWhite, null, null, VS),
+    ttl(none9, turnWhite, null, VS), ttl(mix9, turnWhite, null, VS)]
+    .some((s) => /you’s|yous /.test(s)),
+  ttl(mix9, turnWhite, null, VS));
+// Without an opponent filter the plural is right and must be left alone.
+ok('unfiltered, the plural wording is unchanged',
+  /your opponents played most here/.test(lbl(none9, turnWhite)), lbl(none9, turnWhite));
 
 /* ---------------------------------------------------------------- */
 head('and the same question about a titled player gets the same answer');
