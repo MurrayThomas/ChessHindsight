@@ -6,6 +6,12 @@
 Copyright © 2026 Thomas Murray. Released under the GPL-3.0-or-later — see
 [Licence](#licence).
 
+> **Just want to use it?** Download the ready-to-run version from
+> [Releases](https://github.com/MurrayThomas/ChessHindsight/releases) — unzip and
+> double-click `ChessHindsight.exe`. Nothing to install; it carries its own
+> Python. The green **Code → Download ZIP** button gives you the *source*, which
+> does need Python and is only useful for working on the app.
+
 A local desktop app for analyzing chess games in bulk. It pulls your games from
 Chess.com and Lichess (and any PGN file you point it at), stores them in SQLite,
 and answers questions that the built-in tools on those sites don't:
